@@ -90,7 +90,8 @@ static void sd_poweron(void)
 	long i;
 	// HACK: frequency change
 
-	REG32(spi, SPI_REG_SCKDIV) = SPI_DIV;
+	// REG32(spi, SPI_REG_SCKDIV) = SPI_DIV;
+	REG32(spi, SPI_REG_SCKDIV) = (F_CLK / 0.4);     // 400KHz for initialization
 	REG32(spi, SPI_REG_CSMODE) = SPI_CSMODE_OFF;
 	for (i = 10; i > 0; i--) {
 		sd_dummy();
@@ -185,7 +186,8 @@ static int copy(void)
 	kprintf("LOADING 0x%x B PAYLOAD\r\n", PAYLOAD_SIZE_B);
 	kprintf("LOADING  ");
 
-	REG32(spi, SPI_REG_SCKDIV) = SPI_DIV;
+	// REG32(spi, SPI_REG_SCKDIV) = SPI_DIV;
+	REG32(spi, SPI_REG_SCKDIV) = (F_CLK / 5); // 5MHz 
 	if (sd_cmd(0x52, BBL_PARTITION_START_SECTOR, 0xE1) != 0x00) {
 		sd_cmd_end();
 		return 1;
