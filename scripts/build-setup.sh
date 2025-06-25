@@ -166,14 +166,6 @@ if run_step "1"; then
     # create conda-lock only environment to be used in this section.
     # done with cloning base then installing conda lock to speed up dependency solving.
     CONDA_LOCK_ENV_PATH=$CYDIR/.conda-lock-env
-
-    # check if directories already exist
-    if [ -d $CONDA_LOCK_ENV_PATH ] || [ -d "$CYDIR/.conda-env" ]; then
-        echo "Error: Conda environment directories already exist! Delete them before trying to recreate the \
-conda environment or \`source env.sh\` and skip this step with \`-s 1\`." >&2
-        exit 1
-    fi
-    
     rm -rf $CONDA_LOCK_ENV_PATH &&
     conda create -y -p $CONDA_LOCK_ENV_PATH -c conda-forge $(grep "conda-lock" $CONDA_REQS/chipyard-base.yaml | sed 's/^ \+-//') &&
     source $(conda info --base)/etc/profile.d/conda.sh &&
@@ -198,9 +190,7 @@ conda environment or \`source env.sh\` and skip this step with \`-s 1\`." >&2
     fi
     echo "Storing main conda environment in $CONDA_ENV_NAME"
 
-    conda-lock install --conda $CONDA_EXE $CONDA_ENV_ARG $LOCKFILE &&
-    ## If the above line errors in your environment, you can try the line below
-    # conda-lock install --conda $(which conda) $CONDA_ENV_ARG $LOCKFILE &&
+    conda-lock install --conda $(which conda) $CONDA_ENV_ARG $LOCKFILE &&
     source $(conda info --base)/etc/profile.d/conda.sh &&
     conda activate $CONDA_ENV_NAME
     exit_if_last_command_failed
@@ -305,7 +295,7 @@ if run_step "8"; then
         begin_step "9" "Pre-compiling FireMarshal buildroot sources"
         source $CYDIR/scripts/fix-open-files.sh &&
         ./marshal $VERBOSE_FLAG build br-base.json &&
-        ./marshal $VERBOSE_FLAG build bare-base.json
+        ./marshal $VERBOSE_FLAG clean br-base.json
         exit_if_last_command_failed
     fi
     popd
