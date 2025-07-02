@@ -6,7 +6,7 @@
 #include <cassert>
 
 #include "fesvr/context.h"
-#include "packet.h"
+#include "AccNICpacket.h"
 
 class NetworkDevice {
   public:

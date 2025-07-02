@@ -2,8 +2,8 @@
 #include <svdpi.h>
 #include <stdio.h>
 
-#include "device.h"
-#include "switch.h"
+#include "AccNICdevice.h"
+#include "AccNICswitch.h"
 
 class NetworkSwitch *netsw = NULL;
 class NetworkDevice *netdev = NULL;

@@ -99,7 +99,7 @@ case class AccNicControllerParams(address: BigInt, beatBytes: Int)
  * Take commands from the CPU over TL2, expose as Queues
  */
 class AccNicController(c: AccNicControllerParams)(implicit p: Parameters)
-    extends RegisterRouter(RegisterRouterParams("acc-nic", Seq("ucb-bar,acc-nic"),
+    extends RegisterRouter(RegisterRouterParams("acc-nic", Seq("yale-systems,acc-nic"),
       c.address, beatBytes=c.beatBytes))
     with HasTLControlRegMap
     with HasInterruptSources
@@ -131,6 +131,10 @@ class AccNiCControllerModuleImp(outer: AccNicController)(implicit p: Parameters)
   // hold length of received packets
   val recvCompQueue = Module(new HellaQueue(qDepth)(UInt(NET_LEN_BITS.W)))
   val recvCompCount = queueCount(recvCompQueue.io, qDepth)
+
+  val udpDstPort = RegInit(0.U(16.W))
+  val udpMemBase = RegInit(0.U(64.W))
+  val udpMemOffset = RegInit(0.U(32.W)) // optional
 
   val sendCompValid = sendCompCount > 0.U
   val intMask = RegInit(0.U(2.W))
@@ -179,7 +183,11 @@ class AccNiCControllerModuleImp(outer: AccNicController)(implicit p: Parameters)
     0x20 -> Seq(RegField(2, intMask)),
     0x28 -> Seq(RegField.w(49, txcsumReqQueue.io.enq)),
     0x30 -> Seq(RegField.r(2, rxcsumResQueue.io.deq)),
-    0x31 -> Seq(RegField(1, csumEnable)))
+    0x31 -> Seq(RegField(1, csumEnable)),
+    0x40 -> Seq(RegField(16, udpDstPort)),
+    0x42 -> Seq(RegField(64, udpMemBase)),
+    0x4A -> Seq(RegField(32, udpMemOffset))
+  )
 }
 
 class AccNicSendPath(nInputTaps: Int = 0)(implicit p: Parameters)
@@ -495,13 +503,13 @@ class SimNetwork extends BlackBox with HasBlackBoxResource {
     val reset = Input(Bool())
     val net = Flipped(new NICIOvonly)
   })
-  addResource("/vsrc/SimNetwork.v")
-  addResource("/csrc/SimNetwork.cc")
-  addResource("/csrc/device.h")
-  addResource("/csrc/device.cc")
-  addResource("/csrc/switch.h")
-  addResource("/csrc/switch.cc")
-  addResource("/csrc/packet.h")
+  addResource("/vsrc/AccNICSimNetwork.v")
+  addResource("/csrc/AccNICSimNetwork.cc")
+  addResource("/csrc/AccNICdevice.h")
+  addResource("/csrc/AccNICdevice.cc")
+  addResource("/csrc/AccNICswitch.h")
+  addResource("/csrc/AccNICswitch.cc")
+  addResource("/csrc/AccNICpacket.h")
 }
 
 
@@ -591,7 +599,7 @@ object NicLoopback {
       import PauseConsts.BT_PER_QUANTA
       val packetWords = nicConf.get.packetMaxBytes / NET_IF_BYTES
       val packetQuanta = (nicConf.get.packetMaxBytes * 8) / BT_PER_QUANTA
-      netio.macAddr := PlusArg("macaddr", 0x112233445566L)
+      netio.macAddr := PlusArg("macaddr", BigInt("112233445566", 16).U(48.W), width = ETH_MAC_BITS)
       netio.rlimit.inc := PlusArg("rlimit-inc", 1)
       netio.rlimit.period := PlusArg("rlimit-period", 1)
       netio.rlimit.size := PlusArg("rlimit-size", 8)

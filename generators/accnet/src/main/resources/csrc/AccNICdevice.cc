@@ -1,4 +1,4 @@
-#include "device.h"
+#include "AccNICdevice.h"
 
 #include <stdio.h>
 

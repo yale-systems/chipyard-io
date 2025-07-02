@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "device.h"
+#include "AccNICdevice.h"
 
 class NetworkSwitch {
   public:
