@@ -61,7 +61,7 @@ class WithFireSimFAME5 extends Config((site, here, up) => {
   case FireSimFAME5 => true
 })
 
-class WithNIC extends icenet.WithIceNIC(inBufFlits = 8192, ctrlQueueDepth = 64)
+class WithNIC extends icenet.WithIceNIC(inBufFlits = 8192, usePauser = false, ctrlQueueDepth = 64)
 
 // Adds a small/large NVDLA to the system
 class WithNVDLALarge extends nvidia.blocks.dla.WithNVDLA("large")
@@ -214,6 +214,14 @@ class FireSimRocketConfig extends Config(
   new WithFireSimConfigTweaks ++
   new chipyard.RocketConfig)
 // DOC include end: firesimconfig
+
+class FireSimNicRocketConfig extends Config(
+  new chipyard.harness.WithLoopbackNIC ++       // drive NIC IOs with loopback
+  new WithNIC ++
+  new WithDefaultMMIOOnlyFireSimBridges ++  
+  // new WithDefaultFireSimBridges ++
+  new WithFireSimConfigTweaks ++
+  new chipyard.RocketConfig)
 
 class FireSimRocket1GiBDRAMConfig extends Config(
   new freechips.rocketchip.subsystem.WithExtMemSize((1 << 30) * 1L) ++

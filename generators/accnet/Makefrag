@@ -1,0 +1,9 @@
+accnet_vsrcs = \
+	$(accnet_dir)/vsrc/SimNetwork.v \
+	$(accnet_dir)/vsrc/TraceROM.v
+
+accnet_csrcs = \
+	$(accnet_dir)/csrc/SimNetwork.cc \
+	$(accnet_dir)/csrc/device.cc \
+	$(accnet_dir)/csrc/switch.cc \
+	$(accnet_dir)/csrc/TraceROM.cc
