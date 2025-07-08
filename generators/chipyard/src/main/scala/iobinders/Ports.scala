@@ -12,6 +12,7 @@ import testchipip.cosim.{TraceOutputTop, SpikeCosimConfig}
 import testchipip.iceblk.{BlockDeviceIO, BlockDeviceConfig}
 import testchipip.tsi.{UARTTSIIO}
 import icenet.{NICIOvonly, NICConfig}
+import accnet.{AccNICIOvonly, AccNICConfig}
 import org.chipsalliance.cde.config.{Parameters}
 import freechips.rocketchip.amba.axi4.{AXI4Bundle, AXI4EdgeParameters}
 import freechips.rocketchip.subsystem.{MemoryPortParams, MasterPortParams, SlavePortParams}
@@ -53,6 +54,9 @@ case class BlockDevicePort (val getIO: () => ClockedIO[BlockDeviceIO], val param
 
 case class NICPort         (val getIO: () => ClockedIO[NICIOvonly], val params: NICConfig)
     extends Port[ClockedIO[NICIOvonly]]
+
+case class AccNICPort         (val getIO: () => ClockedIO[AccNICIOvonly], val params: AccNICConfig)
+    extends Port[ClockedIO[AccNICIOvonly]]
 
 case class AXI4MemPort     (val getIO: () => ClockedIO[AXI4Bundle], val params: MemoryPortParams, val edge: AXI4EdgeParameters, val clockFreqMHz: Int)
     extends Port[ClockedIO[AXI4Bundle]]

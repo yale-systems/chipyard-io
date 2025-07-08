@@ -115,6 +115,18 @@ ifeq ($(SUB_PROJECT),icenet)
 	TB                ?= TestDriver
 	TOP               ?= UnitTestSuite
 endif
+# For AccNet developers
+ifeq ($(SUB_PROJECT),accnet)
+	SBT_PROJECT       ?= chipyard
+	MODEL             ?= TestHarness
+	VLOG_MODEL        ?= $(MODEL)
+	MODEL_PACKAGE     ?= chipyard.unittest
+	CONFIG            ?= AccNetUnitTestConfig
+	CONFIG_PACKAGE    ?= accnet
+	GENERATOR_PACKAGE ?= chipyard
+	TB                ?= TestDriver
+	TOP               ?= UnitTestSuite
+endif
 # For Constellation developers
 ifeq ($(SUB_PROJECT),constellation)
 	SBT_PROJECT       ?= chipyard

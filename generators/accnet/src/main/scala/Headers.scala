@@ -85,3 +85,28 @@ class TCPHeader extends Bundle {
   val dest_port = UInt(16.W)
   val source_port = UInt(16.W)
 }
+
+class Headers extends Bundle {
+  // Ethernet Header
+  val eth_dst = UInt(48.W)
+  val eth_src = UInt(48.W)
+  val eth_type = UInt(16.W)
+  // IP Header
+  val ip_version = UInt(4.W)
+  val ip_ihl = UInt(4.W)
+  val ip_tos = UInt(8.W)
+  val ip_len = UInt(16.W)
+  val ip_id = UInt(16.W)
+  val ip_flags = UInt(3.W)
+  val ip_offset = UInt(13.W)
+  val ip_ttl = UInt(8.W)
+  val ip_proto = UInt(8.W)
+  val ip_chksum = UInt(16.W)
+  val ip_src = UInt(32.W)
+  val ip_dst = UInt(32.W)
+  // UDP Header
+  val udp_checksum = UInt(16.W)
+  val udp_length = UInt(16.W)
+  val udp_dest_port = UInt(16.W)
+  val udp_source_port = UInt(16.W)
+}

@@ -41,7 +41,7 @@ class BufferBRAM[T <: Data](n: Int, typ: T) extends Module {
 
 /**
  * Buffers incoming packets without backpressuring
- * Drops at packet boundaries if buffer fills us.
+ * Drops at packet boundaries if buffer fills up.
  * @bufWords Number of flits held by the buffer
  * @maxBytes Maximum number of bytes in a packet
  * @headerBytes Number of bytes in a header
@@ -52,7 +52,7 @@ class BufferBRAM[T <: Data](n: Int, typ: T) extends Module {
  */
 class NetworkPacketBuffer[T <: Data](
     bufWords: Int,
-    maxBytes: Int = ETH_JUMBO_MAX_BYTES,
+    maxBytes: Int = ETH_STANDARD_MAX_BYTES,
     headerBytes: Int = ETH_HEAD_BYTES,
     headerType: T = new EthernetHeader,
     wordBytes: Int = NET_IF_WIDTH / 8,

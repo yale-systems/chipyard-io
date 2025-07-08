@@ -84,3 +84,8 @@ class NICBridgeTargetIO extends Bundle {
   val clock = Input(Clock())
   val nic = Flipped(new NICIOvonly)
 }
+
+class AccNICBridgeTargetIO extends Bundle {
+  val clock = Input(Clock())
+  val nic = Flipped(new AccNICIOvonly)
+}

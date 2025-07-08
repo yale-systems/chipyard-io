@@ -29,3 +29,22 @@ object NICBridge {
     ep
   }
 }
+
+class AccNICBridge(implicit p: Parameters) extends BlackBox with Bridge[HostPortIO[AccNICBridgeTargetIO]] {
+  val moduleName = "firechip.goldengateimplementations.AccSimpleNICBridgeModule"
+  val io = IO(new AccNICBridgeTargetIO)
+  val bridgeIO = HostPort(io)
+  val constructorArg = None
+  generateAnnotations()
+}
+
+
+object AccNICBridge {
+  def apply(clock: Clock, nicIO: icenet.AccNICIOvonly)(implicit p: Parameters): AccNICBridge = {
+    val ep = Module(new AccNICBridge)
+    // TODO: Check following IOs are same size/names/etc
+    ep.io.nic <> nicIO
+    ep.io.clock := clock
+    ep
+  }
+}

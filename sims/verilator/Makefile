@@ -219,7 +219,7 @@ $(sim_debug): $(model_mk_debug) $(dramsim_lib)
 $(output_dir)/%.vpd: $(output_dir)/% $(sim_debug)
 	rm -f $@.vcd && mkfifo $@.vcd
 	vcd2vpd $@.vcd $@ > /dev/null &
-	(set -o pipefail && $(NUMA_PREFIX) $(sim_debug) $(PERMISSIVE_ON) $(SIM_FLAGS) $(EXTRA_SIM_FLAGS) $(SEED_FLAG) $(VERBOSE_FLAGS) -v$@.vcd $(PERMISSIVE_OFF) $< </dev/null 2> >(spike-dasm > $<.out) | tee $<.log)
+	(set -o pipefail && $(NUMA_PREFIX) $(sim_debug) $(PERMISSIVE_ON) $(SIM_FLAGS) $(EXTRA_SIM_FLAGS) $(SEED_FLAG) $(VERBOSE_FLAGS) -v$@.vcd $< </dev/null 2> >(spike-dasm > $<.out) | tee $<.log)
 
 #########################################################################################
 # general cleanup rules

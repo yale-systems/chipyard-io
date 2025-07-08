@@ -16,6 +16,7 @@ import freechips.rocketchip.devices.debug.{DebugModuleKey}
 import freechips.rocketchip.prci.{AsynchronousCrossing}
 import testchipip.cosim.{TracePortKey}
 import icenet._
+import accnet._
 
 import chipyard.clocking.{ChipyardPRCIControlKey}
 import chipyard.harness.{HarnessClockInstantiatorKey}
@@ -62,6 +63,7 @@ class WithFireSimFAME5 extends Config((site, here, up) => {
 })
 
 class WithNIC extends icenet.WithIceNIC(inBufFlits = 8192, usePauser = false, ctrlQueueDepth = 64)
+class WithAccNIC extends accnet.WithIceNIC(inBufFlits = 8192, ctrlQueueDepth = 64)
 
 // Adds a small/large NVDLA to the system
 class WithNVDLALarge extends nvidia.blocks.dla.WithNVDLA("large")
@@ -218,6 +220,14 @@ class FireSimRocketConfig extends Config(
 class FireSimNicRocketConfig extends Config(
   new chipyard.harness.WithLoopbackNIC ++       // drive NIC IOs with loopback
   new WithNIC ++
+  new WithDefaultMMIOOnlyFireSimBridges ++  
+  // new WithDefaultFireSimBridges ++
+  new WithFireSimConfigTweaks ++
+  new chipyard.RocketConfig)
+
+class FireSimAccNicTestConfig extends Config(
+  new chipyard.harness.WithLoopbackAccNIC ++       // drive NIC IOs with loopback
+  new WithAccNIC ++
   new WithDefaultMMIOOnlyFireSimBridges ++  
   // new WithDefaultFireSimBridges ++
   new WithFireSimConfigTweaks ++
