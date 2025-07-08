@@ -63,7 +63,7 @@
 	url = https://github.com/ucb-bar/testchipip.git
 [submodule "sims/firesim"]
 	path = sims/firesim
-	url = https://github.com/firesim/firesim.git
+	url = https://github.com/yale-systems/firesim.git
 [submodule "software/baremetal-ide"]
 	path = software/baremetal-ide
 	url = https://github.com/ucb-bar/Baremetal-IDE.git
@@ -75,7 +75,7 @@
 	url = https://github.com/embench/embench-iot.git
 [submodule "software/firemarshal"]
 	path = software/firemarshal
-	url = https://github.com/firesim/FireMarshal.git
+	url = https://github.com/yale-systems/FireMarshal.git
 [submodule "software/nvdla-workload"]
 	path = software/nvdla-workload
 	url = https://github.com/ucb-bar/nvdla-workload.git
