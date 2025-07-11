@@ -97,7 +97,7 @@ class WithNICBridge extends HarnessBinder({
 
 class WithAccNICBridge extends HarnessBinder({
   case (th: FireSim, port: AccNICPort, chipId: Int) => {
-    NICBridge(port.io.clock, port.io.bits)(th.p)
+    AccNICBridge(port.io.clock, port.io.bits)(th.p)
   }
 })
 

@@ -11,18 +11,18 @@ import firesim.lib.bridgeutils._
 
 import firechip.bridgeinterfaces._
 
-class NICBridge(implicit p: Parameters) extends BlackBox with Bridge[HostPortIO[NICBridgeTargetIO]] {
-  val moduleName = "firechip.goldengateimplementations.SimpleNICBridgeModule"
-  val io = IO(new NICBridgeTargetIO)
+
+class AccNICBridge(implicit p: Parameters) extends BlackBox with Bridge[HostPortIO[AccNICBridgeTargetIO]] {
+  val moduleName = "firechip.goldengateimplementations.AccSimpleNICBridgeModule"
+  val io = IO(new AccNICBridgeTargetIO)
   val bridgeIO = HostPort(io)
   val constructorArg = None
   generateAnnotations()
 }
 
-
-object NICBridge {
-  def apply(clock: Clock, nicIO: icenet.NICIOvonly)(implicit p: Parameters): NICBridge = {
-    val ep = Module(new NICBridge)
+object AccNICBridge {
+  def apply(clock: Clock, nicIO: accnet.AccNICIOvonly)(implicit p: Parameters): AccNICBridge = {
+    val ep = Module(new AccNICBridge)
     // TODO: Check following IOs are same size/names/etc
     ep.io.nic <> nicIO
     ep.io.clock := clock
