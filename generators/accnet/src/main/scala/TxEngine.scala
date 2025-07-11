@@ -36,42 +36,43 @@ class TxEngine(c: AccNicControllerParams)(implicit p: Parameters)
       val interrupt = Output(Bool())
     })
 
+    val txCompCount = RegInit(0.U(16.W))
     val txReqQ = Module(new Queue(UInt(64.W), 64)) // [63]=partial, [62:48]=len, [47:0]=addr  
     val readerMod = reader.module
     val streaming = RegInit(false.B)
+
 
     val reqAddr    = txReqQ.io.deq.bits(47, 0)
     val reqLen     = txReqQ.io.deq.bits(62, 48)
     val reqPartial = txReqQ.io.deq.bits(63)
 
-    val helper = DecoupledHelper(
-      txReqQ.io.deq.valid,
-      readerMod.io.req.ready,
-      !streaming
-    )
-
-    readerMod.io.req.valid := helper.fire(readerMod.io.req.ready)
+    txReqQ.io.deq.ready := readerMod.io.req.fire
+    readerMod.io.req.valid := txReqQ.io.deq.valid
     readerMod.io.req.bits.address := reqAddr
     readerMod.io.req.bits.length  := reqLen
     readerMod.io.req.bits.partial := reqPartial
-    txReqQ.io.deq.ready := readerMod.io.req.fire
+
 
     when (readerMod.io.req.fire) {
       printf(p"[TX-ENGINE] Start DMA: addr = 0x${Hexadecimal(reqAddr)}, len = ${reqLen}, partial = ${reqPartial}\n")
       streaming := true.B
     }
 
-    readerMod.io.resp.ready := true.B
+    io.ext <> readerMod.io.out
 
-    io.ext.valid := readerMod.io.out.valid
-    io.ext.bits  := readerMod.io.out.bits
-    readerMod.io.out.ready := io.ext.ready
+    // readerMod.io.resp.ready := true.B
+
+    // io.ext.valid := readerMod.io.out.valid
+    // io.ext.bits  := readerMod.io.out.bits
+    // readerMod.io.out.ready := io.ext.ready
 
     val interruptPending = RegInit(false.B)
     val interruptClear   = RegInit(false.B)
 
+    readerMod.io.resp.ready := true.B // Always ready to receive response
     when (readerMod.io.resp.fire) {
       interruptPending := true.B
+      txCompCount := txCompCount + 1.U
       printf("[TX-ENGINE] DMA completed, raising interrupt.\n")
     }
 
@@ -83,9 +84,6 @@ class TxEngine(c: AccNicControllerParams)(implicit p: Parameters)
 
     io.interrupt := interruptPending
 
-    val txCount     = txReqQ.io.count
-    val udpDstPort  = RegInit(0.U(16.W))
-
     // Logging MMIO write to enqueue
     when (txReqQ.io.enq.fire) {
       val addr = txReqQ.io.enq.bits(47, 0)
@@ -95,9 +93,8 @@ class TxEngine(c: AccNicControllerParams)(implicit p: Parameters)
     }
 
     tlRegmap(
-      0x00 -> Seq(RegField(16, udpDstPort)),
       0x08 -> Seq(RegField.w(64, txReqQ.io.enq)),
-      0x10 -> Seq(RegField.r(6, txCount)),
+      0x10 -> Seq(RegField.r(16, txCompCount)),
       0x18 -> Seq(RegField(1, interruptPending)),
       0x1C -> Seq(RegField(1, interruptClear))
     )

@@ -72,6 +72,7 @@ class RxEngine(c: AccNicControllerParams)(implicit p: Parameters)
   val writer = LazyModule(new AccNicWriter)
   val mmionode = writer.node
 
+
   def tlRegmap(mapping: RegField.Map*): Unit = regmap(mapping:_*)
 
   lazy val module = new Impl
@@ -81,48 +82,65 @@ class RxEngine(c: AccNicControllerParams)(implicit p: Parameters)
       val interrupt = Output(Bool())
     })
 
-    val dmaAddrRing = Module(new Queue(UInt(64.W), 64))
+    val dmaAddrRing = Module(new Queue(UInt(48.W), 64))
     val packetBuffer = Module(new NetworkPacketBuffer(inBufFlits, maxBytes = packetMaxBytes))
 
     packetBuffer.io.stream.in <> io.ext
-    val lengthFifo = Module(new Queue(UInt(NET_LEN_BITS.W), 64))
 
-    lengthFifo.io.enq.valid := packetBuffer.io.length.valid
-    lengthFifo.io.enq.bits := packetBuffer.io.length.bits
+    
+
+    // val lengthFifo = Module(new Queue(UInt(NET_LEN_BITS.W), 64))
+    // lengthFifo.io.enq.valid := packetBuffer.io.length.valid
+    // lengthFifo.io.enq.bits := packetBuffer.io.length.bits
 
     val writerMod = writer.module
     val streaming = RegInit(false.B)
+    val addr = Reg(UInt(48.W))
+    val length = Reg(UInt(48.W))
 
-    val startDmaHelper = DecoupledHelper(
-      dmaAddrRing.io.deq.valid,
-      lengthFifo.io.deq.valid,
-      writerMod.io.recv.req.ready,
-      !streaming
-    )
+    
 
-    writerMod.io.recv.req.valid := startDmaHelper.fire(writerMod.io.recv.req.ready)
-    writerMod.io.recv.req.bits := dmaAddrRing.io.deq.bits
-    dmaAddrRing.io.deq.ready := writerMod.io.recv.req.fire
+    val bufout = packetBuffer.io.stream.out
+    val buflen = packetBuffer.io.length
 
-    writerMod.io.recv.comp.ready := true.B
+    writerMod.io.in <> bufout
+    writerMod.io.length.valid := buflen.valid
+    writerMod.io.length.bits  := buflen.bits
 
-    writerMod.io.length.valid := startDmaHelper.fire(writerMod.io.recv.req.ready)
-    writerMod.io.length.bits := lengthFifo.io.deq.bits
-    lengthFifo.io.deq.ready := writerMod.io.length.fire
+    writerMod.io.recv.req <> Queue(dmaAddrRing.io.deq, 1)
 
-    writerMod.io.in.valid := packetBuffer.io.stream.out.valid && streaming
-    writerMod.io.in.bits := packetBuffer.io.stream.out.bits
-    packetBuffer.io.stream.out.ready := writerMod.io.in.ready && streaming
+    // val startDmaHelper = DecoupledHelper(
+    //   dmaAddrRing.io.deq.valid,
+    //   lengthFifo.io.deq.valid,
+    //   writerMod.io.recv.req.ready,
+    //   !streaming
+    // )
+
+    // writerMod.io.recv.req.valid := startDmaHelper.fire(writerMod.io.recv.req.ready)
+    // writerMod.io.recv.req.bits := dmaAddrRing.io.deq.bits
+    // dmaAddrRing.io.deq.ready := writerMod.io.recv.req.fire
+
+    // writerMod.io.recv.comp.ready := true.B
+
+    // writerMod.io.length.valid := startDmaHelper.fire(writerMod.io.recv.req.ready)
+    // writerMod.io.length.bits := lengthFifo.io.deq.bits
+    // lengthFifo.io.deq.ready := writerMod.io.length.fire
+
+    // writerMod.io.in.valid := packetBuffer.io.stream.out.valid && streaming
+    // writerMod.io.in.bits := packetBuffer.io.stream.out.bits
+    // packetBuffer.io.stream.out.ready := writerMod.io.in.ready && streaming
 
     when (writerMod.io.recv.req.fire) {
-       printf(p"[RX-ENGINE] Started DMA: addr = 0x${Hexadecimal(writerMod.io.recv.req.bits)}, len = ${writerMod.io.length.bits}\n")
+      printf(p"[RX-ENGINE] Started DMA: addr = 0x${Hexadecimal(writerMod.io.recv.req.bits)}, len = ${writerMod.io.length.bits}\n")
       streaming := true.B
+      addr := writerMod.io.recv.req.bits
+      length := writerMod.io.length.bits
     }
-    when (packetBuffer.io.stream.out.fire) {
-       printf(p"[RX-ENGINE] Streaming word: data = 0x${Hexadecimal(packetBuffer.io.stream.out.bits.data)} last = ${packetBuffer.io.stream.out.bits.last}\n")
-    }
+    // when (packetBuffer.io.stream.out.fire) {
+    //    printf(p"[RX-ENGINE] Streaming word: data = 0x${Hexadecimal(packetBuffer.io.stream.out.bits.data)} last = ${packetBuffer.io.stream.out.bits.last}\n")
+    // }
     when (packetBuffer.io.stream.out.fire && packetBuffer.io.stream.out.bits.last) {
-       printf("[RX-ENGINE] Packet fully streamed, ending DMA.\n")
+      printf("[RX-ENGINE] Packet fully streamed, ending DMA.\n")
       streaming := false.B
     }
 
@@ -131,31 +149,32 @@ class RxEngine(c: AccNicControllerParams)(implicit p: Parameters)
 
     when (writerMod.io.recv.comp.fire) {
       interruptPending := true.B
-       printf("[RX-ENGINE] DMA complete, setting interrupt.\n")
+      printf("[RX-ENGINE] DMA complete, setting interrupt.\n")
     }
 
     when (interruptClear) {
       interruptPending := false.B
       interruptClear := false.B
-       printf("[RX-ENGINE] Interrupt cleared by software.\n")
+      printf("[RX-ENGINE] Interrupt cleared by software.\n")
     }
 
     io.interrupt := interruptPending
 
     val completionLog = Module(new Queue(UInt(64.W), 64))
-    when (writerMod.io.recv.comp.fire) {
+
+    when (writerMod.io.recv.comp.valid && completionLog.io.enq.ready) {
+      writerMod.io.recv.comp.ready := true.B
       completionLog.io.enq.valid := true.B
-      completionLog.io.enq.bits := Cat(writerMod.io.recv.req.bits(47, 0), writerMod.io.length.bits(15, 0))
+      completionLog.io.enq.bits := Cat(addr(47, 0), length(15, 0))
     } .otherwise {
+      writerMod.io.recv.comp.ready := false.B
       completionLog.io.enq.valid := false.B
       completionLog.io.enq.bits := 0.U
     }
 
-    val udpDstPort = RegInit(0.U(16.W))
     val completionCount = completionLog.io.count
 
     tlRegmap(
-      0x00 -> Seq(RegField(16, udpDstPort)),
       0x08 -> Seq(RegField.w(64, dmaAddrRing.io.enq)),
       0x10 -> Seq(RegField.r(64, completionLog.io.deq)),
       0x18 -> Seq(RegField.r(6, completionCount)),
