@@ -172,12 +172,11 @@ class RxEngine(c: AccNicControllerParams)(implicit p: Parameters)
       completionLog.io.enq.bits := 0.U
     }
 
-    val completionCount = completionLog.io.count
-
     tlRegmap(
+      0x04 -> Seq(RegField.r(16, dmaAddrRing.io.count)),
       0x08 -> Seq(RegField.w(64, dmaAddrRing.io.enq)),
       0x10 -> Seq(RegField.r(64, completionLog.io.deq)),
-      0x18 -> Seq(RegField.r(6, completionCount)),
+      0x18 -> Seq(RegField.r(16, completionLog.io.count)),
       0x20 -> Seq(RegField(1, interruptPending)),
       0x24 -> Seq(RegField(1, interruptClear))
     )

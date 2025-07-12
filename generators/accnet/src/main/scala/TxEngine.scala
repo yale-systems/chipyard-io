@@ -36,7 +36,6 @@ class TxEngine(c: AccNicControllerParams)(implicit p: Parameters)
       val interrupt = Output(Bool())
     })
 
-    val txCompCount = RegInit(0.U(16.W))
     val txReqQ = Module(new Queue(UInt(64.W), 64)) // [63]=partial, [62:48]=len, [47:0]=addr  
     val readerMod = reader.module
     val streaming = RegInit(false.B)
@@ -72,7 +71,6 @@ class TxEngine(c: AccNicControllerParams)(implicit p: Parameters)
     readerMod.io.resp.ready := true.B // Always ready to receive response
     when (readerMod.io.resp.fire) {
       interruptPending := true.B
-      txCompCount := txCompCount + 1.U
       printf("[TX-ENGINE] DMA completed, raising interrupt.\n")
     }
 
@@ -92,9 +90,25 @@ class TxEngine(c: AccNicControllerParams)(implicit p: Parameters)
       printf(p"[TX-ENGINE] Enqueue DMA req: addr = 0x${Hexadecimal(addr)}, len = ${len}, partial = ${part}\n")
     }
 
+    val qDepth = ctrlQueueDepth
+    require(qDepth < (1 << 8))
+
+    val sendCompDown = WireInit(false.B)
+    val txCompCount = TwoWayCounter(readerMod.io.resp.fire, sendCompDown, qDepth)
+    val sendCompValid = txCompCount > 0.U
+
+    def sendCompRead = (ready: Bool) => {
+      sendCompDown := sendCompValid && ready
+      (sendCompValid, true.B)
+    }
+
+    // count number of sends completed
+
     tlRegmap(
+      0x00 -> Seq(RegField.r(16, txReqQ.io.count)),
       0x08 -> Seq(RegField.w(64, txReqQ.io.enq)),
       0x10 -> Seq(RegField.r(16, txCompCount)),
+      0x12 -> Seq(RegField.r(1, sendCompRead)),
       0x18 -> Seq(RegField(1, interruptPending)),
       0x1C -> Seq(RegField(1, interruptClear))
     )

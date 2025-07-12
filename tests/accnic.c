@@ -30,31 +30,34 @@ static inline void send_recv()
 		reg_write64(TX_REQ, send_packet);
 	}
 
-	// printf("Waiting for TX completions...\n");
+	printf("Waiting for TX completions...\n");
 	while (true) {
 		ncomps = reg_read16(TX_COUNT) & 0x3f;
 		asm volatile ("fence");
 
-		// printf("TX completions available: %d\n", ncomps);
+		printf("TX completions available: %d\n", ncomps);
 
 		if (ncomps >= NPACKETS) {
+			for (int i = 0; i < NPACKETS; i++) {
+				reg_read8(TX_COMP_READ);
+			}
 			break;
 		}
 	}
 
-	// printf("Waiting for RX completions...\n");
+	printf("Waiting for RX completions...\n");
 	while (true) {
 		ncomps = reg_read16(RX_COMP_COUNT) & 0x3f;
 		asm volatile ("fence");
 
-		// printf("RX completions available: %d\n", ncomps);
+		printf("RX completions available: %d\n", ncomps);
 
 		if (ncomps >= NPACKETS) {
 			break;
 		}
 	}
 
-	// printf("Received %d completions. Checking...\n", ncomps);
+	printf("Received %d completions. Checking...\n", ncomps);
 	for (int i = 0; i < NPACKETS; i++) {
 		uint64_t comp_log = reg_read64(RX_COMP_LOG);
 		asm volatile ("fence");
@@ -65,7 +68,7 @@ static inline void send_recv()
 		lengths[i] = pkt_size;
 		
 		uint32_t *recv_data = (uint32_t *) (src_addr);
-		// printf("Packet %d: size=%u, src_addr=%lx\n", *recv_data, pkt_size, src_addr);
+		printf("Packet %d: size=%u, src_addr=%lx\n", *recv_data, pkt_size, src_addr);
 	}
 }
 
