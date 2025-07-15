@@ -63,7 +63,7 @@ class AccNicWriter(implicit p: Parameters) extends NICLazyModule {
 class RxEngine(c: AccNicControllerParams)(implicit p: Parameters)
   extends RegisterRouter(RegisterRouterParams(
     name = "accnic-RxEngine",
-    compat = Seq("yale-systems,acc-nic"),
+    compat = Seq("yale-systems,acc-nic-rx-engine"),
     base = c.address,
     beatBytes = c.beatBytes
   )) with HasTLControlRegMap
@@ -108,27 +108,6 @@ class RxEngine(c: AccNicControllerParams)(implicit p: Parameters)
     writerMod.io.length.bits  := buflen.bits
 
     writerMod.io.recv.req <> Queue(dmaAddrRing.io.deq, 1)
-
-    // val startDmaHelper = DecoupledHelper(
-    //   dmaAddrRing.io.deq.valid,
-    //   lengthFifo.io.deq.valid,
-    //   writerMod.io.recv.req.ready,
-    //   !streaming
-    // )
-
-    // writerMod.io.recv.req.valid := startDmaHelper.fire(writerMod.io.recv.req.ready)
-    // writerMod.io.recv.req.bits := dmaAddrRing.io.deq.bits
-    // dmaAddrRing.io.deq.ready := writerMod.io.recv.req.fire
-
-    // writerMod.io.recv.comp.ready := true.B
-
-    // writerMod.io.length.valid := startDmaHelper.fire(writerMod.io.recv.req.ready)
-    // writerMod.io.length.bits := lengthFifo.io.deq.bits
-    // lengthFifo.io.deq.ready := writerMod.io.length.fire
-
-    // writerMod.io.in.valid := packetBuffer.io.stream.out.valid && streaming
-    // writerMod.io.in.bits := packetBuffer.io.stream.out.bits
-    // packetBuffer.io.stream.out.ready := writerMod.io.in.ready && streaming
 
     when (writerMod.io.recv.req.fire) {
       printf(p"[RX-ENGINE] Started DMA: addr = 0x${Hexadecimal(writerMod.io.recv.req.bits)}, len = ${writerMod.io.length.bits}\n")

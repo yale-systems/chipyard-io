@@ -18,7 +18,7 @@ class AccNicSendIO extends Bundle {
 class TxEngine(c: AccNicControllerParams)(implicit p: Parameters)
   extends RegisterRouter(RegisterRouterParams(
     name = "accnic-TxEngine",
-    compat = Seq("yale-systems,acc-nic"),
+    compat = Seq("yale-systems,acc-nic-tx-engine"),
     base = c.address,
     beatBytes = c.beatBytes
   )) with HasTLControlRegMap

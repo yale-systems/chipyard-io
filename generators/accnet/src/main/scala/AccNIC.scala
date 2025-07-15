@@ -94,15 +94,6 @@ case object AccNICAttachKey extends Field[AccNICAttachParams](AccNICAttachParams
 
 case class AccNicControllerParams(address: BigInt, beatBytes: Int)
 
-// trait AccNicControllerBundle extends Bundle {
-//   val macAddr = Input(UInt(ETH_MAC_BITS.W))
-//   val txInterrupt = Input(Bool())
-//   val rxInterrupt = Input(Bool())
-// }
-// trait AccNicControllerBundle {
-//   val io: AccNicControllerIO
-// }
-
 trait HasNICParameters {
   implicit val p: Parameters
   val nicExternal = p(AccNICKey).get
