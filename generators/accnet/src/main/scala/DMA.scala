@@ -148,6 +148,10 @@ class StreamReaderCore(nXacts: Int, outFlits: Int, maxBytes: Int)
       assert(req.length > 0.U, "request length must be >0")
     }
 
+    when {io.out.valid} {
+      printf(p"[DMA-READER] outputing stream: out.data=0x${Hexadecimal(io.out.bits.data.data)}, out.keep=0x${Hexadecimal(io.out.bits.data.keep)},out.last=0x${Hexadecimal(io.out.bits.data.last)} \n")
+    }
+
     when (tl.a.fire) {
       val reqBytes = 1.U << reqSize
       sendaddr := sendaddr + reqBytes

@@ -267,7 +267,7 @@ object AccNicLoopback {
 
       // Connect in and out with a pipeline (loopback)
       netio.in <> Pipe(netio.out, latency)
-      netio.in.bits.keep := NET_FULL_KEEP
+      // netio.in.bits.keep := NET_FULL_KEEP
     }
   }
 

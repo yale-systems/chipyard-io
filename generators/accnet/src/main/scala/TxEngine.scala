@@ -51,6 +51,10 @@ class TxEngine(c: AccNicControllerParams)(implicit p: Parameters)
     readerMod.io.req.bits.length  := reqLen
     readerMod.io.req.bits.partial := reqPartial
 
+    
+    when (io.ext.fire) {
+      printf(p"[TX-ENGINE] Sent stream: out.data=0x${Hexadecimal(io.ext.bits.data)}, out.keep=0x${Hexadecimal(io.ext.bits.keep)}, out.last=0x${Hexadecimal(io.ext.bits.last)} \n")
+    }
 
     when (readerMod.io.req.fire) {
       printf(p"[TX-ENGINE] Start DMA: addr = 0x${Hexadecimal(reqAddr)}, len = ${reqLen}, partial = ${reqPartial}\n")

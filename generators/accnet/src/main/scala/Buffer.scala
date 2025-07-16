@@ -78,6 +78,16 @@ class NetworkPacketBuffer[T <: Data](
     val free = Output(UInt(8.W))
   })
 
+  when (io.stream.in.fire) {
+    printf(p"[NetworkPacketBuffer] Received packet: data=0x${Hexadecimal(io.stream.in.bits.data)}, keep=0x${Hexadecimal(io.stream.in.bits.keep)}, last=0x${Hexadecimal(io.stream.in.bits.last)}\n")
+  }
+  when (io.stream.out.fire) {
+    printf(p"[NetworkPacketBuffer] Output packet (fired): data=0x${Hexadecimal(io.stream.out.bits.data)}, keep=0x${Hexadecimal(io.stream.out.bits.keep)}, last=0x${Hexadecimal(io.stream.out.bits.last)}\n")
+  }
+  // when (io.stream.out.valid) {
+  //   printf(p"[NetworkPacketBuffer] Output packet (valid): data=0x${Hexadecimal(io.stream.out.bits.data)}, keep=0x${Hexadecimal(io.stream.out.bits.keep)}, last=0x${Hexadecimal(io.stream.out.bits.last)}\n")
+  // }
+
   def discontinuous(bits: UInt, w: Int): Bool =
     (1 until w).map(i => bits(i) && !bits(i-1)).reduce(_ || _)
 

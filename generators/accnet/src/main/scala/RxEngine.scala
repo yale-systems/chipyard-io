@@ -30,12 +30,10 @@ class AccNicWriter(implicit p: Parameters) extends NICLazyModule {
       val length = Flipped(Valid(UInt(NET_LEN_BITS.W)))
     })
 
-    val streaming = RegInit(false.B)
     val helper = DecoupledHelper(
       io.recv.req.valid,
       writer.module.io.req.ready,
-      io.length.valid,
-      !streaming
+      io.length.valid
     )
 
     writer.module.io.req.valid := helper.fire(writer.module.io.req.ready)
@@ -43,19 +41,17 @@ class AccNicWriter(implicit p: Parameters) extends NICLazyModule {
     writer.module.io.req.bits.length := io.length.bits
     io.recv.req.ready := helper.fire(io.recv.req.valid)
 
-    writer.module.io.in.valid := io.in.valid && streaming
+    writer.module.io.in.valid := io.in.valid
     writer.module.io.in.bits := io.in.bits
-    io.in.ready := writer.module.io.in.ready && streaming
+    io.in.ready := writer.module.io.in.ready
 
     io.recv.comp <> writer.module.io.resp
 
     when (io.recv.req.fire) {
-       printf(p"[RX-WRITER] Received DMA request: addr = 0x${Hexadecimal(io.recv.req.bits)} len = ${io.length.bits}\n")
-      streaming := true.B
+      printf(p"[RX-WRITER] Received DMA request: addr = 0x${Hexadecimal(io.recv.req.bits)} len = ${io.length.bits}\n")
     }
     when (io.in.fire && io.in.bits.last) {
        printf("[RX-WRITER] Finished streaming packet into memory.\n")
-      streaming := false.B
     }
   }
 }
@@ -87,18 +83,14 @@ class RxEngine(c: AccNicControllerParams)(implicit p: Parameters)
 
     packetBuffer.io.stream.in <> io.ext
 
-    
-
-    // val lengthFifo = Module(new Queue(UInt(NET_LEN_BITS.W), 64))
-    // lengthFifo.io.enq.valid := packetBuffer.io.length.valid
-    // lengthFifo.io.enq.bits := packetBuffer.io.length.bits
+    when (io.ext.fire) {
+      printf(p"[RX-ENGINE] Received stream: in.data=0x${Hexadecimal(io.ext.bits.data)}, in.keep=0x${Hexadecimal(io.ext.bits.keep)}, in.last=0x${Hexadecimal(io.ext.bits.last)} \n")
+    }
 
     val writerMod = writer.module
     val streaming = RegInit(false.B)
     val addr = Reg(UInt(48.W))
     val length = Reg(UInt(48.W))
-
-    
 
     val bufout = packetBuffer.io.stream.out
     val buflen = packetBuffer.io.length
