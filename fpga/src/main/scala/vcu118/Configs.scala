@@ -26,6 +26,8 @@ class WithDefaultPeripherals extends Config((site, here, up) => {
   case VCU118ShellPMOD => "SDIO"
 })
 
+class WithAccNIC extends accnet.WithAccNIC(inBufFlits = 8192, ctrlQueueDepth = 64)
+
 class WithSystemModifications extends Config((site, here, up) => {
   case DTSTimebase => BigInt((1e6).toLong)
   case BootROMLocated(x) => up(BootROMLocated(x), site).map { p =>
@@ -64,6 +66,35 @@ class RocketVCU118Config extends Config(
   new chipyard.RocketConfig
 )
 // DOC include end: AbstractVCU118 and Rocket
+
+class WithAccNICVCU118Tweaks extends Config(
+  // clocking
+  new chipyard.harness.WithAllClocksFromHarnessClockInstantiator ++
+  new chipyard.clocking.WithPassthroughClockGenerator ++
+  new chipyard.config.WithUniformBusFrequencies(100) ++
+  new WithFPGAFrequency(100) ++ // default 100MHz freq
+  // harness binders
+  new WithQSFPAccNIC ++     // Connect QSFP to AccNIC
+  new WithUART ++
+  new WithSPISDCard ++
+  new WithDDRMem ++
+  new WithJTAG ++
+
+  // Adding AccNIC support
+  new WithAccNIC ++
+
+  // other configuration
+  new WithDefaultPeripherals ++
+  new chipyard.config.WithTLBackingMemory ++ // use TL backing memory
+  new WithSystemModifications ++ // setup busses, use sdboot bootrom, setup ext. mem. size
+  new freechips.rocketchip.subsystem.WithoutTLMonitors ++
+  new freechips.rocketchip.subsystem.WithNMemoryChannels(1)
+)
+
+class RocketAccNICVCU118Config extends Config(
+  new WithAccNICVCU118Tweaks ++
+  new chipyard.RocketConfig
+)
 
 class BoomVCU118Config extends Config(
   new WithFPGAFrequency(50) ++

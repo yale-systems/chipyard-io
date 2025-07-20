@@ -36,6 +36,7 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends VCU118S
   val edge      = Overlay(PCIeOverlayKey, new PCIeVCU118EdgeShellPlacer(this, PCIeShellInput()))
   val sys_clock2 = Overlay(ClockInputOverlayKey, new SysClock2VCU118ShellPlacer(this, ClockInputShellInput()))
   val ddr2       = Overlay(DDROverlayKey, new DDR2VCU118ShellPlacer(this, DDRShellInput()))
+  val qsfp      = Overlay(QSFPOverlayKey, new QSFPVCU118ShellPlacer(this, QSFPShellInput()))
 
 // DOC include start: ClockOverlay
   // place all clocks in the shell
@@ -65,6 +66,9 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends VCU118S
   val io_uart_bb = BundleBridgeSource(() => (new UARTPortIO(dp(PeripheryUARTKey).head)))
   dp(UARTOverlayKey).head.place(UARTDesignInput(io_uart_bb))
 // DOC include end: UartOverlay
+
+  /*** QSFP ***/
+  val qsfpPlacedOverlay = dp(QSFPOverlayKey).head.place(QSFPDesignInput())
 
   /*** SPI ***/
 

@@ -12,11 +12,44 @@ import sifive.blocks.devices.spi.{HasPeripherySPI, SPIPortIO}
 import chipyard._
 import chipyard.harness._
 import chipyard.iobinders._
+import accnet.{AccNicQSFP}
 
 /*** UART ***/
 class WithUART extends HarnessBinder({
   case (th: VCU118FPGATestHarnessImp, port: UARTPort, chipId: Int) => {
     th.vcu118Outer.io_uart_bb.bundle <> port.io
+  }
+})
+
+/*** QSFP1 ***/
+class WithQSFPAccNIC extends HarnessBinder({
+  case (th: VCU118FPGATestHarnessImp, port: AccNICPort, chipId: Int) => {
+    // th.vcu118Outer.io_qsfp1_bb.bundle <> port.io
+    // withClock(port.io.clock) { AccNicQSFP.connect(port.io.bits, port.params) }
+    val qsfp_io = th.vcu118Outer.qsfpPlacedOverlay.overlayOutput.qsfp.getWrappedValue
+    
+    val accIO = Wire(new accnet.FlippedQSFPIO)
+    // // Direct connections for UInt(4.W) signals
+    qsfp_io.tx_p := accIO.tx_p 
+    qsfp_io.tx_n := accIO.tx_n 
+    accIO.rx_p := qsfp_io.rx_p 
+    accIO.rx_n := qsfp_io.rx_n 
+    // Direct connections for scalar signals
+    accIO.refclk_p := qsfp_io.refclk_p 
+    accIO.refclk_n := qsfp_io.refclk_n 
+    qsfp_io.modsell := accIO.modsell 
+    qsfp_io.resetl := accIO.resetl  
+    accIO.modprsl := qsfp_io.modprsl 
+    accIO.intl := qsfp_io.intl    
+    qsfp_io.lpmode := accIO.lpmode   
+
+    // val accIO = Wire(new accnet.FlippedQSFPIO)
+    // accIO := qsfp_io.asUInt.asTypeOf(new accnet.FlippedQSFPIO)
+
+    withClock(port.io.clock) {
+      val port_bits = Some(port.io.bits)
+      AccNicQSFP.connect(accIO, port_bits, port.params, port.io.clock, th.childReset.asBool) 
+    }
   }
 })
 

@@ -12,6 +12,8 @@ import freechips.rocketchip.interrupts._
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.util._
 import AccNetConsts._
+import chisel3.experimental.{IntParam}
+
 
 // Copied from testchipip to avoid dependency
 class ClockedIO[T <: Data](private val gen: T) extends Bundle {
@@ -274,5 +276,83 @@ object AccNicLoopback {
   def connect(net: AccNICIOvonly, nicConf:  AccNICConfig): Unit = {
     val packetWords = nicConf.packetMaxBytes / NET_IF_BYTES
     AccNicLoopback.connect(Some(net), Some(nicConf), 4 * packetWords)
+  }
+}
+
+class FlippedQSFPIO() extends Bundle {
+  val tx_p      = Output(UInt(4.W))
+  val tx_n      = Output(UInt(4.W))
+  val rx_p      = Input(UInt(4.W))
+  val rx_n      = Input(UInt(4.W))
+  val refclk_p  = Input(Bool())
+  val refclk_n  = Input(Bool())
+  val modsell   = Output(Bool())
+  val resetl    = Output(Bool())
+  val modprsl   = Input(Bool())
+  val intl      = Input(Bool())
+  val lpmode    = Output(Bool())
+}
+
+class AccNicQSFPBlackBox extends BlackBox(Map("DATA_WIDTH" -> IntParam(NET_IF_WIDTH))) 
+with HasBlackBoxResource {
+  val io = IO(new Bundle {
+    val clk = Input(Clock())
+    val rst = Input(Bool())
+    val qsfp1 = new FlippedQSFPIO
+    val tx = Flipped(new StreamChannelFull(NET_IF_WIDTH))
+    val rx = new StreamChannelFull(NET_IF_WIDTH)
+    val clk_125mhz_int = Input(Clock())
+    val rst_125mhz_int = Input(Bool())
+  })
+  // addResource("/vsrc/mac_ts_insert.v")
+  // addResource("/vsrc/axis_async_fifo.v")
+  // addResource("/vsrc/cmac_pad.v")
+  // addResource("/vsrc/cmac_gty_ch_wrapper.v")
+  // addResource("/vsrc/cmac_gty_wrapper.v")
+  addResource("/vsrc/qsfp_core.v")
+}
+
+object AccNicQSFP {
+  def connect(qsfpExternal: FlippedQSFPIO, net: Option[AccNICIOvonly], nicConf: AccNICConfig, clock: Clock, reset: Bool): Unit = {
+    val qsfpCore = Module(new AccNicQSFPBlackBox)
+
+    net.foreach { netio =>
+      netio.macAddr := PlusArg("macaddr", BigInt("112233445566", 16), width = ETH_MAC_BITS)
+      netio.rlimit.inc := PlusArg("rlimit-inc", 1)
+      netio.rlimit.period := PlusArg("rlimit-period", 1)
+      netio.rlimit.size := PlusArg("rlimit-size", 8)
+
+      qsfpCore.io.clk := clock
+      qsfpCore.io.rst := reset
+
+      qsfpCore.io.clk_125mhz_int := clock
+      qsfpCore.io.rst_125mhz_int := reset
+
+      qsfpExternal.tx_p       := qsfpCore.io.qsfp1.tx_p
+      qsfpExternal.tx_n       := qsfpCore.io.qsfp1.tx_n
+      qsfpCore.io.qsfp1.rx_p  := qsfpExternal.rx_p
+      qsfpCore.io.qsfp1.rx_n  := qsfpExternal.rx_n
+
+      qsfpCore.io.qsfp1.refclk_p := qsfpExternal.refclk_p
+      qsfpCore.io.qsfp1.refclk_n := qsfpExternal.refclk_n
+
+      qsfpExternal.modsell      := qsfpCore.io.qsfp1.modsell
+      qsfpExternal.resetl       := qsfpCore.io.qsfp1.resetl
+      qsfpCore.io.qsfp1.modprsl := qsfpExternal.modprsl
+      qsfpCore.io.qsfp1.intl    := qsfpExternal.intl
+      qsfpExternal.lpmode       := qsfpCore.io.qsfp1.lpmode
+
+      qsfpCore.io.tx.data     := netio.out.bits.data
+      qsfpCore.io.tx.keep     := netio.out.bits.keep
+      qsfpCore.io.tx.last     := netio.out.bits.last
+      qsfpCore.io.tx.user     := false.B // No user data in this example
+      qsfpCore.io.tx.valid    := netio.out.valid
+
+      netio.in.bits.data      := qsfpCore.io.rx.data
+      netio.in.bits.keep      := qsfpCore.io.rx.keep
+      netio.in.bits.last      := qsfpCore.io.rx.last
+      netio.in.valid          := qsfpCore.io.rx.valid
+      qsfpCore.io.rx.ready  := true.B
+    }
   }
 }
