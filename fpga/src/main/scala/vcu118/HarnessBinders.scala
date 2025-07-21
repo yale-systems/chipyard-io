@@ -35,8 +35,8 @@ class WithQSFPAccNIC extends HarnessBinder({
     accIO.rx_p := qsfp_io.rx_p 
     accIO.rx_n := qsfp_io.rx_n 
     // Direct connections for scalar signals
-    accIO.refclk_p := qsfp_io.refclk_p 
-    accIO.refclk_n := qsfp_io.refclk_n 
+    accIO.mgt_refclk_p := qsfp_io.mgt_refclk_p 
+    accIO.mgt_refclk_n := qsfp_io.mgt_refclk_n 
     qsfp_io.modsell := accIO.modsell 
     qsfp_io.resetl := accIO.resetl  
     accIO.modprsl := qsfp_io.modprsl 
@@ -46,9 +46,9 @@ class WithQSFPAccNIC extends HarnessBinder({
     // val accIO = Wire(new accnet.FlippedQSFPIO)
     // accIO := qsfp_io.asUInt.asTypeOf(new accnet.FlippedQSFPIO)
 
-    withClock(port.io.clock) {
+    withClock(th.childClock) {
       val port_bits = Some(port.io.bits)
-      AccNicQSFP.connect(accIO, port_bits, port.params, port.io.clock, th.childReset.asBool) 
+      AccNicQSFP.connect(accIO, port_bits, port.params, th.childClock, th.childReset.asBool) 
     }
   }
 })

@@ -42,6 +42,7 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends VCU118S
   // place all clocks in the shell
   require(dp(ClockInputOverlayKey).size >= 1)
   val sysClkNode = dp(ClockInputOverlayKey)(0).place(ClockInputDesignInput()).overlayOutput.node
+  // val refClkNode = dp(ClockInputOverlayKey)(1).place(ClockInputDesignInput()).overlayOutput.node
 
   /*** Connect/Generate clocks ***/
 
@@ -107,6 +108,7 @@ class VCU118FPGATestHarnessImp(_outer: VCU118FPGATestHarness) extends LazyRawMod
   resetIBUF.io.I := reset
 
   val sysclk: Clock = _outer.sysClkNode.out.head._1.clock
+  // val refclk: Clock = _outer.refClkNode.out.head._1.clock
 
   val powerOnReset: Bool = PowerOnResetFPGAOnly(sysclk)
   _outer.sdc.addAsyncPath(Seq(powerOnReset))
