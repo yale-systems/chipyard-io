@@ -48,7 +48,7 @@ class WithQSFPAccNIC extends HarnessBinder({
 
     withClock(th.childClock) {
       val port_bits = Some(port.io.bits)
-      AccNicQSFP.connect(accIO, port_bits, port.params, th.childClock, th.childReset.asBool) 
+      AccNicQSFP.connect(accIO, port_bits, port.params, th.childClock, th.childReset.asBool, th.referenceClockFreqMHz) 
     }
   }
 })
