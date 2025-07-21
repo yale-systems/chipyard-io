@@ -293,7 +293,7 @@ class FlippedQSFPIO() extends Bundle {
   val lpmode    = Output(Bool())
 }
 
-class AccNicQSFPBlackBox extends BlackBox(Map("DATA_WIDTH" -> IntParam(NET_IF_WIDTH))) 
+class QSFPCore extends BlackBox(Map("DATA_WIDTH" -> IntParam(NET_IF_WIDTH))) 
 with HasBlackBoxResource {
   val io = IO(new Bundle {
     val clk = Input(Clock())
@@ -304,17 +304,20 @@ with HasBlackBoxResource {
     val clk_125mhz_int = Input(Clock())
     val rst_125mhz_int = Input(Bool())
   })
-  // addResource("/vsrc/mac_ts_insert.v")
-  // addResource("/vsrc/axis_async_fifo.v")
-  // addResource("/vsrc/cmac_pad.v")
-  // addResource("/vsrc/cmac_gty_ch_wrapper.v")
-  // addResource("/vsrc/cmac_gty_wrapper.v")
-  addResource("/vsrc/qsfp_core.v")
+  addResource("/vsrc/mac_ts_insert.v")
+  addResource("/vsrc/axis_async_fifo.v")
+  addResource("/vsrc/axis_adapter.v")
+  addResource("/vsrc/cmac_pad.v")
+  addResource("/vsrc/cmac_gty_ch_wrapper.v")
+  addResource("/vsrc/cmac_gty_wrapper.v")
+  addResource("/vsrc/sync_reset.v")
+  addResource("/vsrc/sync_signal.v")
+  addResource("/vsrc/QSFPCore.v")
 }
 
 object AccNicQSFP {
   def connect(qsfpExternal: FlippedQSFPIO, net: Option[AccNICIOvonly], nicConf: AccNICConfig, clock: Clock, reset: Bool): Unit = {
-    val qsfpCore = Module(new AccNicQSFPBlackBox)
+    val qsfpCore = Module(new QSFPCore)
 
     net.foreach { netio =>
       netio.macAddr := PlusArg("macaddr", BigInt("112233445566", 16), width = ETH_MAC_BITS)
