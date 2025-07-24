@@ -161,6 +161,14 @@ debug-bitstream: $(build_dir)/obj/post_synth.dcp
 			$(build_dir)/debug_obj \
 			$(fpga_common_script_dir)
 
+.PHONY: program
+program: bitstream
+	cd $(build_dir); vivado \
+	-nojournal -mode batch \
+	-source $(fpga_common_script_dir)/program.tcl \
+	-tclargs \
+		-bit-file "$(BIT_FILE)"
+
 #########################################################################################
 # general cleanup rules
 #########################################################################################
