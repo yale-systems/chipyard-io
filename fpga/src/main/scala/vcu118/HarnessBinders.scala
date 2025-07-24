@@ -29,7 +29,7 @@ class WithQSFPAccNIC extends HarnessBinder({
     val qsfp_io = th.vcu118Outer.qsfpPlacedOverlay.overlayOutput.qsfp.getWrappedValue
     
     val accIO = Wire(new accnet.FlippedQSFPIO)
-    // // Direct connections for UInt(4.W) signals
+    // Direct connections for UInt(4.W) signals
     qsfp_io.tx_p := accIO.tx_p 
     qsfp_io.tx_n := accIO.tx_n 
     accIO.rx_p := qsfp_io.rx_p 
@@ -43,12 +43,9 @@ class WithQSFPAccNIC extends HarnessBinder({
     accIO.intl := qsfp_io.intl    
     qsfp_io.lpmode := accIO.lpmode   
 
-    // val accIO = Wire(new accnet.FlippedQSFPIO)
-    // accIO := qsfp_io.asUInt.asTypeOf(new accnet.FlippedQSFPIO)
-
-    withClock(th.childClock) {
+    withClock(port.io.clock) {
       val port_bits = Some(port.io.bits)
-      AccNicQSFP.connect(accIO, port_bits, port.params, th.childClock, th.childReset.asBool, th.referenceClockFreqMHz) 
+      AccNicQSFP.connect(accIO, port_bits, port.params, port.io.clock, th.childReset.asBool, th.referenceClockFreqMHz) 
     }
   }
 })

@@ -71,8 +71,8 @@ class WithAccNICVCU118Tweaks extends Config(
   // clocking
   new chipyard.harness.WithAllClocksFromHarnessClockInstantiator ++
   new chipyard.clocking.WithPassthroughClockGenerator ++
-  new chipyard.config.WithUniformBusFrequencies(100) ++
-  new WithFPGAFrequency(100) ++ // default 100MHz freq
+  new chipyard.config.WithUniformBusFrequencies(125) ++
+  new WithFPGAFrequency(125) ++ // default 100MHz freq
   // harness binders
   new WithQSFPAccNIC ++     // Connect QSFP to AccNIC
   new WithUART ++
