@@ -10,11 +10,11 @@
 
 #define DMA_ALIGN(x) (((x) + 7) & ~7)
 
-#define NPACKETS 2
+#define NPACKETS 10
 #define TEST_OFFSET 0
 #define TEST_LEN 90
 #define ARRAY_LEN DMA_ALIGN(TEST_LEN + NPACKETS + TEST_OFFSET)
-#define NTRIALS 1
+#define NTRIALS 3
 
 uint8_t src[NPACKETS][ARRAY_LEN];
 uint8_t dst[NPACKETS][ARRAY_LEN];
@@ -81,7 +81,7 @@ static inline void send_recv()
 void run_test(void)
 {
 	unsigned long start, end;
-	int i, j, length;
+	uint64_t i, j, length;
 
 	memset(dst, 0, sizeof(dst));
 	asm volatile ("fence");
@@ -102,7 +102,7 @@ void run_test(void)
 
 		for (j = 0; j < length; j++) {
 			if (dst[i][j] != src[i][j + TEST_OFFSET]) {
-				printf("Data mismatch @ %d, %d: %x != %x\n",
+				printf("Data mismatch @ %ld, %ld: %x != %x\n",
 					i, j, dst[i][j], src[i][j + TEST_OFFSET]);
 				exit(EXIT_FAILURE);
 			}
