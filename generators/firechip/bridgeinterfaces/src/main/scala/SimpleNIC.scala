@@ -119,10 +119,25 @@ class NICIOvonly extends Bundle {
   val pauser = Input(new PauserSettings)
 }
 
-class AccNICIOvonly extends Bundle {
-  val in = Flipped(Valid(new StreamChannel(AccNetConsts.NET_IF_WIDTH)))
-  val out = Valid(new StreamChannel(AccNetConsts.NET_IF_WIDTH))
-  val macAddr = Input(UInt(AccNetConsts.ETH_MAC_BITS.W))
+// class AccNICIO extends Bundle {
+//   val in = Flipped(Valid(new StreamChannel(AccNetConsts.NET_IF_WIDTH)))
+//   val out = Valid(new StreamChannel(AccNetConsts.NET_IF_WIDTH))
+//   val macAddr = Input(UInt(AccNetConsts.ETH_MAC_BITS.W))
+//   val rlimit = Input(new RateLimiterSettings)
+// }
+
+class StreamIO(val w: Int) extends Bundle {
+  val in = Flipped(Decoupled(new StreamChannel(w)))
+  val out = Decoupled(new StreamChannel(w))
+
+  def flipConnect(other: StreamIO) {
+    in <> other.out
+    other.in <> out
+  }
+}
+
+class AccNICIO extends StreamIO(NET_IF_WIDTH) {
+  val macAddr = Input(UInt(ETH_MAC_BITS.W))
   val rlimit = Input(new RateLimiterSettings)
 }
 
@@ -133,5 +148,5 @@ class NICBridgeTargetIO extends Bundle {
 
 class AccNICBridgeTargetIO extends Bundle {
   val clock = Input(Clock())
-  val nic = Flipped(new AccNICIOvonly)
+  val nic = Flipped(new AccNICIO)
 }

@@ -21,7 +21,7 @@ class AccNICBridge(implicit p: Parameters) extends BlackBox with Bridge[HostPort
 }
 
 object AccNICBridge {
-  def apply(clock: Clock, nicIO: accnet.AccNICIOvonly)(implicit p: Parameters): AccNICBridge = {
+  def apply(clock: Clock, nicIO: accnet.AccNICIO)(implicit p: Parameters): AccNICBridge = {
     val ep = Module(new AccNICBridge)
     // TODO: Check following IOs are same size/names/etc
     ep.io.nic <> nicIO
