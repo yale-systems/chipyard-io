@@ -8,7 +8,8 @@
 #include "accnic.h"
 #include "mmio.h"
 
-#define DMA_ALIGN(x) (((x) + 7) & ~7)
+
+#define DMA_ALIGN(x) (((x) + 63) & ~63)
 
 #define NPACKETS 10
 #define TEST_OFFSET 0
@@ -16,8 +17,9 @@
 #define ARRAY_LEN DMA_ALIGN(TEST_LEN + NPACKETS + TEST_OFFSET)
 #define NTRIALS 3
 
-uint8_t src[NPACKETS][ARRAY_LEN];
-uint8_t dst[NPACKETS][ARRAY_LEN];
+uint8_t src[NPACKETS][ARRAY_LEN] __attribute__((aligned(64)));
+uint8_t dst[NPACKETS][ARRAY_LEN] __attribute__((aligned(64)));
+
 uint64_t lengths[NPACKETS];
 
 static inline void send_recv()
@@ -66,11 +68,16 @@ static inline void send_recv()
 		asm volatile ("fence");
 
 		uint32_t pkt_size = comp_log & 0xffff;
-		uint64_t src_addr = (comp_log >> 16) & 0xffffffffffffULL;
-		printf("Packet %d: size=%u, src_addr=0x%lx, data=0x", i, pkt_size, src_addr);
-		// for (int j = 0; j < pkt_size; j++) {
-		// 	uint8_t *data = (uint8_t *)(uintptr_t)(src_addr + j);
+		uint64_t addr = (comp_log >> 16) & 0xffffffffffffULL;
+		printf("*** Packet %d: size=%u, addr=0x%lx, \ndata=0x", i, pkt_size, addr);
+		// for (uint32_t j = 0; j < pkt_size; j++) {
+		// 	uint8_t *data = (uint8_t *)(uintptr_t)(addr + j);
 		// 	printf("%02x", *data);
+		// }
+		// printf("\n");
+		// printf("*** Original Packet %d: \ndata=0x", i);
+		// for (uint32_t j = 0; j < pkt_size; j++) {
+		// 	printf("%02x", src[i][j + TEST_OFFSET]);
 		// }
 		printf("\n");
 
