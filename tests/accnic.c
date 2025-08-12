@@ -11,14 +11,21 @@
 
 #define DMA_ALIGN(x) (((x) + 63) & ~63)
 
-#define NPACKETS 10
+#define NPACKETS 1
 #define TEST_OFFSET 0
 #define TEST_LEN 90
 #define ARRAY_LEN DMA_ALIGN(TEST_LEN + NPACKETS + TEST_OFFSET)
-#define NTRIALS 3
+#define NTRIALS 1
+
+#define UDP_TEST_LEN 2048
+#define UDP_RING_SIZE 4096
+#define UDP_ARRAY_LEN DMA_ALIGN(UDP_RING_SIZE)
 
 uint8_t src[NPACKETS][ARRAY_LEN] __attribute__((aligned(64)));
 uint8_t dst[NPACKETS][ARRAY_LEN] __attribute__((aligned(64)));
+
+uint8_t udp_src[UDP_ARRAY_LEN] __attribute__((aligned(64)));
+uint8_t udp_dst[UDP_ARRAY_LEN] __attribute__((aligned(64)));
 
 uint64_t lengths[NPACKETS];
 
@@ -117,6 +124,72 @@ void run_test(void)
 	}
 }
 
+static inline void udp_send_recv() {
+	uint32_t tx_head = reg_read32(UDP_TX_RING_HEAD);
+	uint32_t tx_tail = reg_read32(UDP_TX_RING_TAIL);
+	uint32_t rx_head = reg_read32(UDP_RX_RING_HEAD);
+	uint32_t rx_tail = reg_read32(UDP_RX_RING_TAIL);
+
+	// printf("Current UDP TX ring head: %d\n", tx_head);
+	// printf("Current UDP TX ring tail: %d\n", tx_tail);
+	// printf("Current UDP RX ring head: %d\n", rx_head);
+	// printf("Current UDP RX ring tail: %d\n", rx_tail);
+
+	tx_tail = (tx_tail + UDP_TEST_LEN) % UDP_RING_SIZE;
+	reg_write32(UDP_TX_RING_TAIL, tx_tail);
+	
+	while (tx_tail != tx_head) {
+		tx_head = reg_read32(UDP_TX_RING_HEAD);
+		printf("** Read UDP TX ring head: %d\n", tx_head);
+	}
+
+	printf("TX complete\n");
+
+	while (rx_tail != (rx_head + UDP_TEST_LEN) % UDP_RING_SIZE) {
+		rx_tail = reg_read32(UDP_RX_RING_TAIL);
+		printf("** Read UDP RX ring head: %d\n", rx_tail);
+	}
+	rx_head = rx_tail;
+	reg_write32(UDP_RX_RING_HEAD, rx_head);
+
+	printf("RX complete\n");
+
+	// printf("Source=\n");
+	// for (uint32_t j = 0; j < UDP_TEST_LEN; j++) {
+	// 	printf("%02x", udp_src[j]);
+	// }
+	// printf("\n");
+	
+	// printf("Destination=\n");
+	// for (uint32_t j = 0; j < UDP_TEST_LEN; j++) {
+	// 	printf("%02x", udp_dst[j]);
+	// }
+	// printf("\n");
+}
+
+void run_udp_test(void) {
+	unsigned long start, end;
+	uint64_t i, j, mod_j;
+
+	memset(udp_dst, 0, sizeof(udp_dst));
+	asm volatile ("fence");
+
+	for (i = 0; i < NPACKETS; i++) {
+		start = rdcycle();
+		udp_send_recv();
+		end = rdcycle();
+		printf("send/recv %lu cycles\n", end - start);
+
+		for (j = i * UDP_TEST_LEN; j < (i+1) * UDP_TEST_LEN; j++) {
+			mod_j = j % UDP_RING_SIZE;
+			if (udp_dst[mod_j] != udp_src[mod_j]) {
+				printf("UDP Data mismatch @ %ld: %x != %x\n", j, udp_dst[mod_j], udp_src[mod_j]);
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
+}
+
 void init_rx(void) {
     // Initialize the receive buffer
 	printf("Initializing RX engine\n");
@@ -132,8 +205,33 @@ void init_rx(void) {
 	asm volatile ("fence");
 }
 
-int main(void)
-{
+void init_udp(void) {
+	// RX
+	reg_write64(UDP_RX_RING_BASE, (uint64_t) udp_dst);
+	reg_write32(UDP_RX_RING_SIZE, UDP_RING_SIZE);
+	reg_write32(UDP_RX_RING_HEAD, 0);
+	reg_write32(UDP_RX_RING_TAIL, 0);
+	// TX
+	reg_write64(UDP_TX_RING_BASE, (uint64_t) udp_src);
+	reg_write32(UDP_TX_RING_SIZE, UDP_RING_SIZE);
+	reg_write32(UDP_TX_RING_HEAD, 0);
+	reg_write32(UDP_TX_RING_TAIL, 0);
+	reg_write16(UDP_TX_MTU, 1472);
+	reg_write64(UDP_TX_HDR_MAC_SRC, 0x112233445566);
+	reg_write64(UDP_TX_HDR_MAC_DST, 0x887766554433);
+	reg_write32(UDP_TX_HDR_IP_SRC, 0x0a0b0c0d);
+	reg_write32(UDP_TX_HDR_IP_DST, 0x0e0f1011);
+	reg_write8(UDP_TX_HDR_IP_TOS, 0);
+	reg_write8(UDP_TX_HDR_IP_TTL, 64);
+	reg_write16(UDP_TX_HDR_IP_ID, 0);
+	reg_write16(UDP_TX_HDR_UDP_SRC_PORT, 1234);
+	reg_write16(UDP_TX_HDR_UDP_DST_PORT, 1111);
+	// reg_write8(UDP_TX_HDR_UDP_CSUM, 1500);
+
+	asm volatile ("fence");
+}
+
+void init_buffers(void) {
 	int i, j;
 
 	for (i = 0; i < NPACKETS; i++) {
@@ -141,12 +239,31 @@ int main(void)
 			src[i][j] = (i * TEST_LEN + j) & 0xff;
 	}
 
-	
+	for (j = 0; j < UDP_ARRAY_LEN; j++) {
+		udp_src[j] = j & 0xff;
+	}
+}
+
+int main(void)
+{
+	int i;
+
+	init_buffers();
+
+	// Test Normal Operation
 	for (i = 0; i < NTRIALS; i++) {
-		printf("Trial %d\n", i);
+		printf("Trial %d (Normal Op)\n", i);
 		init_rx();
 		run_test();
 	}
+
+	// Test UDP Offload
+	for (i = 0; i < NTRIALS; i++) {
+		printf("Trial %d (UDP)\n", i);
+		init_udp();
+		run_udp_test();
+	}
+	
 
 	printf("All correct\n");
 
