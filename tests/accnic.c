@@ -11,7 +11,7 @@
 
 #define DMA_ALIGN(x) (((x) + 63) & ~63)
 
-#define NPACKETS 1
+#define NPACKETS 5
 #define TEST_OFFSET 0
 #define TEST_LEN 90
 #define ARRAY_LEN DMA_ALIGN(TEST_LEN + NPACKETS + TEST_OFFSET)
@@ -206,6 +206,9 @@ void init_rx(void) {
 }
 
 void init_udp(void) {
+	// Contor registers
+	reg_write32(CTRL_FILTER_PORT, 1234);
+	reg_write32(CTRL_FILTER_IP,   0xA000001); // 10.0.0.1
 	// RX
 	reg_write64(UDP_RX_RING_BASE, (uint64_t) udp_dst);
 	reg_write32(UDP_RX_RING_SIZE, UDP_RING_SIZE);
@@ -220,12 +223,12 @@ void init_udp(void) {
 	reg_write64(UDP_TX_HDR_MAC_SRC, 0x112233445566);
 	reg_write64(UDP_TX_HDR_MAC_DST, 0x887766554433);
 	reg_write32(UDP_TX_HDR_IP_SRC, 0x0a0b0c0d);
-	reg_write32(UDP_TX_HDR_IP_DST, 0x0e0f1011);
+	reg_write32(UDP_TX_HDR_IP_DST, 0xA000001);
 	reg_write8(UDP_TX_HDR_IP_TOS, 0);
 	reg_write8(UDP_TX_HDR_IP_TTL, 64);
 	reg_write16(UDP_TX_HDR_IP_ID, 0);
-	reg_write16(UDP_TX_HDR_UDP_SRC_PORT, 1234);
-	reg_write16(UDP_TX_HDR_UDP_DST_PORT, 1111);
+	reg_write16(UDP_TX_HDR_UDP_SRC_PORT, 1111);
+	reg_write16(UDP_TX_HDR_UDP_DST_PORT, 1234);
 	// reg_write8(UDP_TX_HDR_UDP_CSUM, 1500);
 
 	asm volatile ("fence");

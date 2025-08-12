@@ -12,7 +12,9 @@
 #define CTRL_BASE (ACCNIC_BASE + CTRL_OFFSET)
 
 // Control registers
-#define CTRL_INTR_MASK (CTRL_BASE + 0x00)
+#define CTRL_INTR_MASK   (CTRL_BASE + 0x00)
+#define CTRL_FILTER_PORT (CTRL_BASE + 0x08)
+#define CTRL_FILTER_IP   (CTRL_BASE + 0x10)
 
 // RX Engine registers
 #define RX_DMA_ADDR_COUNT (RX_BASE + 0x04)
