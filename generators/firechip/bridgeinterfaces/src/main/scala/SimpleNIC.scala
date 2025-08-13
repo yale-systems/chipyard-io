@@ -136,8 +136,8 @@ class StreamIO(val w: Int) extends Bundle {
   }
 }
 
-class AccNICIO extends StreamIO(NET_IF_WIDTH) {
-  val macAddr = Input(UInt(ETH_MAC_BITS.W))
+class AccNICIO extends StreamIO(AccNetConsts.NET_IF_WIDTH) {
+  val macAddr = Input(UInt(AccNetConsts.ETH_MAC_BITS.W))
   val rlimit = Input(new RateLimiterSettings)
 }
 

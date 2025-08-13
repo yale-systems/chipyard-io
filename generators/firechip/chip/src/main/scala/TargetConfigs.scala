@@ -225,13 +225,21 @@ class FireSimNicRocketConfig extends Config(
   new WithFireSimConfigTweaks ++
   new chipyard.RocketConfig)
 
-class FireSimAccNicTestConfig extends Config(
+class FireSimAccNicQuadCoreTestConfig extends Config(
   new chipyard.harness.WithLoopbackAccNIC ++       // drive NIC IOs with loopback
   new WithAccNIC ++
   new WithDefaultMMIOOnlyFireSimBridges ++  
   // new WithDefaultFireSimBridges ++
   new WithFireSimConfigTweaks ++
-  new chipyard.RocketConfig)
+  new chipyard.QuadRocketConfig)
+
+class FireSimAccNicQuadCoreHighPerfTestConfig extends Config(
+  new chipyard.harness.WithLoopbackAccNIC ++       // drive NIC IOs with loopback
+  new WithAccNIC ++
+  new WithDefaultMMIOOnlyFireSimBridges ++  
+  // new WithDefaultFireSimBridges ++
+  new WithFireSimHighPerfConfigTweaks ++
+  new chipyard.QuadRocketConfig)
 
 class FireSimRocket1GiBDRAMConfig extends Config(
   new freechips.rocketchip.subsystem.WithExtMemSize((1 << 30) * 1L) ++
