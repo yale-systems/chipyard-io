@@ -72,7 +72,7 @@ class WithAccNICVCU118Tweaks extends Config(
   new chipyard.harness.WithAllClocksFromHarnessClockInstantiator ++
   new chipyard.clocking.WithPassthroughClockGenerator ++
   new chipyard.config.WithUniformBusFrequencies(125) ++
-  new WithFPGAFrequency(125) ++ // default 100MHz freq
+  new WithFPGAFrequency(125) ++ // default 125MHz freq
   // harness binders
   new WithQSFPAccNIC ++     // Connect QSFP to AccNIC
   new WithUART ++
@@ -94,6 +94,16 @@ class WithAccNICVCU118Tweaks extends Config(
 class RocketAccNICVCU118Config extends Config(
   new WithAccNICVCU118Tweaks ++
   new chipyard.RocketConfig
+)
+
+class DualRocketAccNICVCU118Config extends Config(
+  new WithAccNICVCU118Tweaks ++
+  new chipyard.DualRocketConfig
+)
+
+class QuadRocketAccNICVCU118Config extends Config(
+  new WithAccNICVCU118Tweaks ++
+  new chipyard.QuadRocketConfig
 )
 
 class BoomVCU118Config extends Config(
