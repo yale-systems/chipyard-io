@@ -220,6 +220,7 @@ class FireSimRocketConfig extends Config(
 class FireSimNicRocketConfig extends Config(
   new chipyard.harness.WithLoopbackNIC ++       // drive NIC IOs with loopback
   new WithNIC ++
+  new WithNICBridge ++
   new WithDefaultMMIOOnlyFireSimBridges ++  
   // new WithDefaultFireSimBridges ++
   new WithFireSimConfigTweaks ++
