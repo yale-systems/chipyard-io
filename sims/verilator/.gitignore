@@ -3,3 +3,5 @@
 !Makefile
 !verilator.mk
 !dramsim2_ini
+!run-accnic.sh
+!run-iocache.sh

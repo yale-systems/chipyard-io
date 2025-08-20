@@ -48,6 +48,7 @@ class LoopbackNICRocketConfig extends Config(
 class LoopbackAccNICRocketConfig extends Config(
   new chipyard.harness.WithLoopbackAccNIC ++                      // drive NIC IOs with loopback
   new accnet.WithAccNIC ++                                        // add an AccNIC
+  new accnet_io_cache.WithIOCache ++
   new freechips.rocketchip.subsystem.WithoutTLMonitors ++
   new freechips.rocketchip.rocket.WithNHugeCores(1) ++
   new chipyard.config.AbstractConfig)
