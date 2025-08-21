@@ -154,6 +154,3 @@
 [submodule "generators/accnet"]
 	path = generators/accnet
 	url = https://github.com/yale-systems/Accnet.git
-[submodule "generators/accnet-io-cache"]
-	path = generators/accnet-io-cache
-	url = https://github.com/yale-systems/accnet-io-cache.git

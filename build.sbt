@@ -156,7 +156,7 @@ lazy val testchipip = (project in file("generators/testchipip"))
 lazy val chipyard = (project in file("generators/chipyard"))
   .dependsOn(testchipip, rocketchip, boom, rocketchip_blocks, rocketchip_inclusive_cache,
     dsptools, rocket_dsp_utils,
-    gemmini, icenet, accnet, accnet_io_cache, tracegen, cva6, nvdla, sodor, ibex, fft_generator,
+    gemmini, icenet, accnet, tracegen, cva6, nvdla, sodor, ibex, fft_generator,
     constellation, mempress, barf, shuttle, caliptra_aes, rerocc,
     compressacc, saturn, ara, firrtl2_bridge)
   .settings(libraryDependencies ++= rocketLibDeps.value)
@@ -209,11 +209,6 @@ lazy val icenet = (project in file("generators/icenet"))
   .settings(commonSettings)
 
 lazy val accnet = (project in file("generators/accnet"))
-  .dependsOn(rocketchip)
-  .settings(libraryDependencies ++= rocketLibDeps.value)
-  .settings(commonSettings)
-
-lazy val accnet_io_cache = (project in file("generators/accnet-io-cache"))
   .dependsOn(rocketchip)
   .settings(libraryDependencies ++= rocketLibDeps.value)
   .settings(commonSettings)

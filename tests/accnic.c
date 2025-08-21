@@ -15,10 +15,10 @@
 #define TEST_OFFSET 0
 #define TEST_LEN 90
 #define ARRAY_LEN DMA_ALIGN(TEST_LEN + NPACKETS + TEST_OFFSET)
-#define NTRIALS 1
+#define NTRIALS 3
 
 #define UDP_TEST_LEN 2048
-#define UDP_RING_SIZE 4096
+#define UDP_RING_SIZE (8*1024)
 #define UDP_ARRAY_LEN DMA_ALIGN(UDP_RING_SIZE)
 
 uint8_t src[NPACKETS][ARRAY_LEN] __attribute__((aligned(64)));
@@ -137,6 +137,8 @@ static inline void udp_send_recv() {
 
 	tx_tail = (tx_tail + UDP_TEST_LEN) % UDP_RING_SIZE;
 	reg_write32(UDP_TX_RING_TAIL, tx_tail);
+
+	// printf("Updated tx_tail => %u\n", tx_tail);
 	
 	while (tx_tail != tx_head) {
 		tx_head = reg_read32(UDP_TX_RING_HEAD);
@@ -210,15 +212,17 @@ void init_udp(void) {
 	reg_write32(CTRL_FILTER_PORT, 1234);
 	reg_write32(CTRL_FILTER_IP,   0xA000001); // 10.0.0.1
 	// RX
+	reg_write32(UDP_RX_RING_SIZE, 0); 		// Make 0 to stop nic from working
 	reg_write64(UDP_RX_RING_BASE, (uint64_t) udp_dst);
-	reg_write32(UDP_RX_RING_SIZE, UDP_RING_SIZE);
 	reg_write32(UDP_RX_RING_HEAD, 0);
 	reg_write32(UDP_RX_RING_TAIL, 0);
+	reg_write32(UDP_RX_RING_SIZE, UDP_RING_SIZE);
 	// TX
+	reg_write32(UDP_TX_RING_SIZE, 0);  		// Make 0 to stop nic from working
 	reg_write64(UDP_TX_RING_BASE, (uint64_t) udp_src);
-	reg_write32(UDP_TX_RING_SIZE, UDP_RING_SIZE);
 	reg_write32(UDP_TX_RING_HEAD, 0);
 	reg_write32(UDP_TX_RING_TAIL, 0);
+	reg_write32(UDP_TX_RING_SIZE, UDP_RING_SIZE);
 	reg_write16(UDP_TX_MTU, 1472);
 	reg_write64(UDP_TX_HDR_MAC_SRC, 0x112233445566);
 	reg_write64(UDP_TX_HDR_MAC_DST, 0x887766554433);

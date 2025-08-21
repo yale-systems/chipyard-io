@@ -31,7 +31,6 @@ class DigitalTop(implicit p: Parameters) extends ChipyardSystem
   with sifive.blocks.devices.spi.HasPeripherySPI // Enables optionally adding the sifive SPI port
   with icenet.CanHavePeripheryIceNIC // Enables optionally adding the IceNIC for FireSim
   with accnet.CanHavePeripheryAccNIC // Enables optionally adding the AccNIC
-  with accnet_io_cache.CanHavePeripheryIOCache // Enables IO Cache (Connection Table)
   with chipyard.example.CanHavePeripheryInitZero // Enables optionally adding the initzero example widget
   with chipyard.example.CanHavePeripheryGCD // Enables optionally adding the GCD example widget
   with chipyard.example.CanHavePeripheryStreamingFIR // Enables optionally adding the DSPTools FIR example widget
