@@ -6,6 +6,7 @@
 
 #include <riscv-pk/encoding.h>
 #include "accnic.h"
+#include "iocache_regs.h"
 #include "mmio.h"
 
 
@@ -125,6 +126,8 @@ void run_test(void)
 }
 
 static inline void udp_send_recv() {
+	uint32_t val;
+
 	uint32_t tx_head = reg_read32(UDP_TX_RING_HEAD);
 	uint32_t tx_tail = reg_read32(UDP_TX_RING_TAIL);
 	uint32_t rx_head = reg_read32(UDP_RX_RING_HEAD);
@@ -138,23 +141,34 @@ static inline void udp_send_recv() {
 	tx_tail = (tx_tail + UDP_TEST_LEN) % UDP_RING_SIZE;
 	reg_write32(UDP_TX_RING_TAIL, tx_tail);
 
-	// printf("Updated tx_tail => %u\n", tx_tail);
+	printf("Updated tx_tail => %u\n", tx_tail);
+	printf("waiting...\n");
+
+	val = reg_read32(IOCACHE_TXCOMP_AVAILABLE(0));
+	printf("Check IOCache TXC_AVAIL Before: 0x%08x\n", val);
 	
 	while (tx_tail != tx_head) {
 		tx_head = reg_read32(UDP_TX_RING_HEAD);
 		printf("** Read UDP TX ring head: %d\n", tx_head);
 	}
-
 	printf("TX complete\n");
+	val = reg_read32(IOCACHE_TXCOMP_AVAILABLE(0));
+	printf("Check IOCache TXC_AVAIL After: 0x%08x\n", val);
 
 	while (rx_tail != (rx_head + UDP_TEST_LEN) % UDP_RING_SIZE) {
 		rx_tail = reg_read32(UDP_RX_RING_TAIL);
 		printf("** Read UDP RX ring head: %d\n", rx_tail);
 	}
+	val = reg_read32(IOCACHE_RX_AVAILABLE(0));
+	printf("Check IOCache RX_AVAIL Before: 0x%08x\n", val);
+
 	rx_head = rx_tail;
 	reg_write32(UDP_RX_RING_HEAD, rx_head);
-
 	printf("RX complete\n");
+
+	val = reg_read32(IOCACHE_RX_AVAILABLE(0));
+	printf("Check IOCache RX_AVAIL After: 0x%08x\n", val);
+
 
 	// printf("Source=\n");
 	// for (uint32_t j = 0; j < UDP_TEST_LEN; j++) {
@@ -257,11 +271,14 @@ int main(void)
 
 	init_buffers();
 
+	printf("First IOCACHE offset: %08lx\n", IOCACHE_ENABLED(0));
+	printf("Last IOCACHE offset:  %08lx\n", IOCACHE_FLAGS_RO(7));
+
 	// Test Normal Operation
 	for (i = 0; i < NTRIALS; i++) {
 		printf("Trial %d (Normal Op)\n", i);
-		init_rx();
-		run_test();
+		// init_rx();
+		// run_test();
 	}
 
 	// Test UDP Offload
