@@ -12,7 +12,11 @@
 #define IOCACHE_ROW_STRIDE   0x80UL  /* 128B stride per row (16 * BEAT_BYTES) */
 
 /* ---- Global registers ---- */
-#define IOCACHE_REG_INTMASK  (IOCACHE_BASE + 0x00UL)
+#define IOCACHE_REG_INTMASK_RX         (IOCACHE_BASE + 0x00UL)
+#define IOCACHE_REG_INTMASK_TXCOMP     (IOCACHE_BASE + 0x08UL)
+#define IOCACHE_REG_CPU_SEL            (IOCACHE_BASE + 0x10UL)
+#define IOCACHE_REG_SCHED_READ         (IOCACHE_BASE + 0x18UL)
+#define IOCACHE_REG_SCHED_PEEK         (IOCACHE_BASE + 0x20UL)
 
 /* ---- Row field offsets (relative to row base) ---- */
 #define IOCACHE_ENABLED_OFF           0x00UL
@@ -26,6 +30,9 @@
 #define IOCACHE_TXCOMP_AVAILABLE_OFF  0x40UL
 #define IOCACHE_TXCOMP_SUSPENDED_OFF  0x48UL
 #define IOCACHE_FLAGS_RO_OFF          0x50UL
+#define IOCACHE_CONN_ID_OFF           0x58UL
+#define IOCACHE_PROC_PTR_OFF          0x60UL  /* 64-bit process pointer */
+#define IOCACHE_PROC_CPU_OFF          0x68UL
 
 /* ---- Macro to compute register address for row i ---- */
 #define IOCACHE_REG(row, off) \
@@ -43,5 +50,8 @@
 #define IOCACHE_TXCOMP_AVAILABLE(row) IOCACHE_REG((row), IOCACHE_TXCOMP_AVAILABLE_OFF)
 #define IOCACHE_TXCOMP_SUSPENDED(row) IOCACHE_REG((row), IOCACHE_TXCOMP_SUSPENDED_OFF)
 #define IOCACHE_FLAGS_RO(row)         IOCACHE_REG((row), IOCACHE_FLAGS_RO_OFF)
+#define IOCACHE_CONN_ID(row)          IOCACHE_REG((row), IOCACHE_CONN_ID_OFF)
+#define IOCACHE_PROC_PTR(row)         IOCACHE_REG((row), IOCACHE_PROC_PTR_OFF)
+#define IOCACHE_PROC_CPU(row)         IOCACHE_REG((row), IOCACHE_PROC_CPU_OFF)
 
 #endif /* __IOCACHE_REGS_H__ */
