@@ -108,6 +108,19 @@ static int test_fair_sched_round_robin(void)
         }
     }
 
+    /* Disable row0 and re-check */
+    do_write(IOCACHE_ENABLED(0), 1, 0);
+    uint64_t expect3[4] = { ptr9, ptr9, ptr9, ptr9 };
+    for (int i = 0; i < 4; i++) {
+        uint64_t got = do_read(IOCACHE_REG_SCHED_READ, 64);
+        printf("  after disable row0, read[%d] = 0x%016" PRIx64 "\n", i, got);
+        if (got != expect3[i]) {
+            fprintf(stderr, "ERROR: RR mismatch (after disable) at i=%d (got 0x%016" PRIx64 ", expect 0x%016" PRIx64 ")\n",
+                    i, got, expect3[i]);
+            return -2;
+        }
+    }
+
     /* No match case */
     do_write(IOCACHE_REG_CPU_SEL, 32, 99);
     for (int i = 0; i < 2; i++) {
