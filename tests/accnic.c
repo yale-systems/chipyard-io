@@ -12,13 +12,13 @@
 
 #define DMA_ALIGN(x) (((x) + 63) & ~63)
 
-#define NPACKETS 5
+#define NPACKETS 3
 #define TEST_OFFSET 0
 #define TEST_LEN 90
 #define ARRAY_LEN DMA_ALIGN(TEST_LEN + NPACKETS + TEST_OFFSET)
 #define NTRIALS 3
 
-#define UDP_TEST_LEN 2048
+#define UDP_TEST_LEN 64
 #define UDP_RING_SIZE (8*1024)
 #define UDP_ARRAY_LEN DMA_ALIGN(UDP_RING_SIZE)
 
@@ -125,85 +125,91 @@ void run_test(void)
 	}
 }
 
-static inline void udp_send_recv() {
-	uint32_t val;
+static inline void udp_send_recv(int ring) {
+    uint32_t val;
 
-	uint32_t tx_head = reg_read32(UDP_TX_RING_HEAD);
-	uint32_t tx_tail = reg_read32(UDP_TX_RING_TAIL);
-	uint32_t rx_head = reg_read32(UDP_RX_RING_HEAD);
-	uint32_t rx_tail = reg_read32(UDP_RX_RING_TAIL);
+	uint64_t tx_time, rx_time;
 
-	// printf("Current UDP TX ring head: %d\n", tx_head);
-	// printf("Current UDP TX ring tail: %d\n", tx_tail);
-	// printf("Current UDP RX ring head: %d\n", rx_head);
-	// printf("Current UDP RX ring tail: %d\n", rx_tail);
+    uint32_t tx_head = reg_read32(UDP_TX_RING_HEAD(ring));
+    uint32_t tx_tail = reg_read32(UDP_TX_RING_TAIL(ring));
+    uint32_t rx_head = reg_read32(UDP_RX_RING_HEAD(ring));
+    uint32_t rx_tail = reg_read32(UDP_RX_RING_TAIL(ring));
 
-	tx_tail = (tx_tail + UDP_TEST_LEN) % UDP_RING_SIZE;
-	reg_write32(UDP_TX_RING_TAIL, tx_tail);
+    // printf("Current UDP TX ring head: %d\n", tx_head);
+    // printf("Current UDP TX ring tail: %d\n", tx_tail);
+    // printf("Current UDP RX ring head: %d\n", rx_head);
+    // printf("Current UDP RX ring tail: %d\n", rx_tail);
 
-	printf("Updated tx_tail => %u\n", tx_tail);
-	printf("waiting...\n");
+    tx_tail = (tx_tail + UDP_TEST_LEN) % UDP_RING_SIZE;
+    reg_write32(UDP_TX_RING_TAIL(ring), tx_tail);
 
-	val = reg_read32(IOCACHE_TXCOMP_AVAILABLE(0));
-	printf("Check IOCache TXC_AVAIL Before: 0x%08x\n", val);
-	
-	while (tx_tail != tx_head) {
-		tx_head = reg_read32(UDP_TX_RING_HEAD);
-		printf("** Read UDP TX ring head: %d\n", tx_head);
-	}
-	printf("TX complete\n");
-	val = reg_read32(IOCACHE_TXCOMP_AVAILABLE(0));
-	printf("Check IOCache TXC_AVAIL After: 0x%08x\n", val);
+    printf("Updated tx_tail => %u\n", tx_tail);
+    printf("waiting...\n");
 
-	while (rx_tail != (rx_head + UDP_TEST_LEN) % UDP_RING_SIZE) {
-		rx_tail = reg_read32(UDP_RX_RING_TAIL);
-		printf("** Read UDP RX ring head: %d\n", rx_tail);
-	}
-	val = reg_read32(IOCACHE_RX_AVAILABLE(0));
-	printf("Check IOCache RX_AVAIL Before: 0x%08x\n", val);
+    val = reg_read32(IOCACHE_TXCOMP_AVAILABLE(ring));
+    printf("Check IOCache TXC_AVAIL Before: 0x%08x\n", val);
 
-	rx_head = rx_tail;
-	reg_write32(UDP_RX_RING_HEAD, rx_head);
-	printf("RX complete\n");
+    while (tx_tail != tx_head) {
+        tx_head = reg_read32(UDP_TX_RING_HEAD(ring));
+        printf("** Read UDP TX ring head: %d\n", tx_head);
+    }
+    printf("TX complete\n");
+    val = reg_read32(IOCACHE_TXCOMP_AVAILABLE(ring));
+    printf("Check IOCache TXC_AVAIL After: 0x%08x\n", val);
 
-	val = reg_read32(IOCACHE_RX_AVAILABLE(0));
-	printf("Check IOCache RX_AVAIL After: 0x%08x\n", val);
+    while (rx_tail != (rx_head + UDP_TEST_LEN) % UDP_RING_SIZE) {
+        rx_tail = reg_read32(UDP_RX_RING_TAIL(ring));
+        printf("** Read UDP RX ring head: %d\n", rx_tail);
+    }
+    val = reg_read32(IOCACHE_RX_AVAILABLE(ring));
+    printf("Check IOCache RX_AVAIL Before: 0x%08x\n", val);
 
+    rx_head = rx_tail;
+    reg_write32(UDP_RX_RING_HEAD(ring), rx_head);
+    printf("RX complete\n");
 
-	// printf("Source=\n");
-	// for (uint32_t j = 0; j < UDP_TEST_LEN; j++) {
-	// 	printf("%02x", udp_src[j]);
-	// }
-	// printf("\n");
-	
-	// printf("Destination=\n");
-	// for (uint32_t j = 0; j < UDP_TEST_LEN; j++) {
-	// 	printf("%02x", udp_dst[j]);
-	// }
-	// printf("\n");
+    val = reg_read32(IOCACHE_RX_AVAILABLE(ring));
+    printf("Check IOCache RX_AVAIL After: 0x%08x\n", val);
+
+	tx_time = reg_read64(UDP_TX_LAST_TIMESTAMP);
+	rx_time = reg_read64(UDP_RX_LAST_TIMESTAMP);
+
+	printf("time_diff=%ld,		rx_time=%ld, tx_time=%ld\n", rx_time - tx_time, rx_time, tx_time);
+
+    // printf("Source=\n");
+    // for (uint32_t j = 0; j < UDP_TEST_LEN; j++) {
+    //  printf("%02x", udp_src[j]);
+    // }
+    // printf("\n");
+    
+    // printf("Destination=\n");
+    // for (uint32_t j = 0; j < UDP_TEST_LEN; j++) {
+    //  printf("%02x", udp_dst[j]);
+    // }
+    // printf("\n");
 }
 
-void run_udp_test(void) {
-	unsigned long start, end;
-	uint64_t i, j, mod_j;
+void run_udp_test(int ring) {
+    unsigned long start, end;
+    uint64_t i, j, mod_j;
 
-	memset(udp_dst, 0, sizeof(udp_dst));
-	asm volatile ("fence");
+    memset(udp_dst, 0, sizeof(udp_dst));
+    asm volatile ("fence");
 
-	for (i = 0; i < NPACKETS; i++) {
-		start = rdcycle();
-		udp_send_recv();
-		end = rdcycle();
-		printf("send/recv %lu cycles\n", end - start);
+    for (i = 0; i < NPACKETS; i++) {
+        start = rdcycle();
+        udp_send_recv(ring);
+        end = rdcycle();
+        printf("send/recv %lu cycles\n", end - start);
 
-		for (j = i * UDP_TEST_LEN; j < (i+1) * UDP_TEST_LEN; j++) {
-			mod_j = j % UDP_RING_SIZE;
-			if (udp_dst[mod_j] != udp_src[mod_j]) {
-				printf("UDP Data mismatch @ %ld: %x != %x\n", j, udp_dst[mod_j], udp_src[mod_j]);
-				exit(EXIT_FAILURE);
-			}
-		}
-	}
+        for (j = i * UDP_TEST_LEN; j < (i+1) * UDP_TEST_LEN; j++) {
+            mod_j = j % UDP_RING_SIZE;
+            if (udp_dst[mod_j] != udp_src[mod_j]) {
+                printf("UDP Data mismatch @ %ld: %x != %x\n", j, udp_dst[mod_j], udp_src[mod_j]);
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
 }
 
 void init_rx(void) {
@@ -221,35 +227,65 @@ void init_rx(void) {
 	asm volatile ("fence");
 }
 
-void init_udp(void) {
-	// Contor registers
-	reg_write32(CTRL_FILTER_PORT, 1234);
-	reg_write32(CTRL_FILTER_IP,   0xA000001); // 10.0.0.1
-	// RX
-	reg_write32(UDP_RX_RING_SIZE, 0); 		// Make 0 to stop nic from working
-	reg_write64(UDP_RX_RING_BASE, (uint64_t) udp_dst);
-	reg_write32(UDP_RX_RING_HEAD, 0);
-	reg_write32(UDP_RX_RING_TAIL, 0);
-	reg_write32(UDP_RX_RING_SIZE, UDP_RING_SIZE);
-	// TX
-	reg_write32(UDP_TX_RING_SIZE, 0);  		// Make 0 to stop nic from working
-	reg_write64(UDP_TX_RING_BASE, (uint64_t) udp_src);
-	reg_write32(UDP_TX_RING_HEAD, 0);
-	reg_write32(UDP_TX_RING_TAIL, 0);
-	reg_write32(UDP_TX_RING_SIZE, UDP_RING_SIZE);
-	reg_write16(UDP_TX_MTU, 1472);
-	reg_write64(UDP_TX_HDR_MAC_SRC, 0x112233445566);
-	reg_write64(UDP_TX_HDR_MAC_DST, 0x887766554433);
-	reg_write32(UDP_TX_HDR_IP_SRC, 0x0a0b0c0d);
-	reg_write32(UDP_TX_HDR_IP_DST, 0xA000001);
-	reg_write8(UDP_TX_HDR_IP_TOS, 0);
-	reg_write8(UDP_TX_HDR_IP_TTL, 64);
-	reg_write16(UDP_TX_HDR_IP_ID, 0);
-	reg_write16(UDP_TX_HDR_UDP_SRC_PORT, 1111);
-	reg_write16(UDP_TX_HDR_UDP_DST_PORT, 1234);
-	// reg_write8(UDP_TX_HDR_UDP_CSUM, 1500);
+void init_udp(int ring, uint16_t port) {
+	printf("Init start\n");
 
-	asm volatile ("fence");
+	reg_write8(IOCACHE_ENABLED(ring),  0); // Make 0 to stop nic from working
+    reg_write32(CTRL_INTR_MASK, 0);
+
+    reg_write32(UDP_RX_RING_HEAD(ring), 0);
+    reg_write32(UDP_RX_RING_TAIL(ring), 0);
+    reg_write32(UDP_TX_RING_HEAD(ring), 0);
+    reg_write32(UDP_TX_RING_TAIL(ring), 0);
+
+    reg_write16(UDP_TX_MTU, 1472);
+    reg_write64(UDP_TX_HDR_MAC_SRC, 0x112233445566);
+    reg_write64(UDP_TX_HDR_MAC_DST, 0x887766554433);
+    reg_write8(UDP_TX_HDR_IP_TOS, 0);
+    reg_write8(UDP_TX_HDR_IP_TTL, 64);
+    reg_write16(UDP_TX_HDR_IP_ID, 0);
+    // reg_write8(UDP_TX_HDR_UDP_CSUM, 1500);
+
+	reg_write32(IOCACHE_SRC_IP(ring),   0x0A000001);
+	reg_write16(IOCACHE_SRC_PORT(ring), port);
+	reg_write32(IOCACHE_DST_IP(ring),   0x0A000001); // 10.0.0.1
+	reg_write16(IOCACHE_DST_PORT(ring), port);
+	reg_write32(IOCACHE_CONN_ID(ring),  port);
+
+	reg_write64(IOCACHE_RX_RING_ADDR(ring), (uint64_t) udp_dst);
+    reg_write32(IOCACHE_RX_RING_SIZE(ring), UDP_RING_SIZE);
+    reg_write64(IOCACHE_TX_RING_ADDR(ring), (uint64_t) udp_src);
+    reg_write32(IOCACHE_TX_RING_SIZE(ring), UDP_RING_SIZE);
+    asm volatile ("fence");
+
+	reg_write8(IOCACHE_ENABLED(ring),  1);
+
+	printf("Init complete\n");
+    asm volatile ("fence");
+}
+
+void clean_ring(int ring) {
+	// IOCache
+	reg_write8 (IOCACHE_ENABLED(ring),  	0); // This MUST be done first!
+	reg_write32(IOCACHE_SRC_IP(ring),   	0);
+	reg_write16(IOCACHE_SRC_PORT(ring), 	0);
+	reg_write32(IOCACHE_DST_IP(ring),   	0);
+	reg_write16(IOCACHE_DST_PORT(ring), 	0);
+	reg_write32(IOCACHE_CONN_ID(ring),  	0);
+
+	reg_write64(IOCACHE_RX_RING_ADDR(ring), 0);
+    reg_write32(IOCACHE_RX_RING_SIZE(ring), 0);
+    reg_write64(IOCACHE_TX_RING_ADDR(ring), 0);
+    reg_write32(IOCACHE_TX_RING_SIZE(ring), 0);
+	
+	// RX
+    reg_write32(UDP_RX_RING_HEAD(ring), 	0);
+    reg_write32(UDP_RX_RING_TAIL(ring), 	0);
+    // TX
+    reg_write32(UDP_TX_RING_HEAD(ring),	 	0);
+    reg_write32(UDP_TX_RING_TAIL(ring), 	0);
+
+    asm volatile ("fence");
 }
 
 void init_buffers(void) {
@@ -267,29 +303,34 @@ void init_buffers(void) {
 
 int main(void)
 {
-	int i;
+    int i;
 
-	init_buffers();
+    init_buffers();
 
-	printf("First IOCACHE offset: %08lx\n", IOCACHE_ENABLED(0));
-	printf("Last IOCACHE offset:  %08lx\n", IOCACHE_FLAGS_RO(7));
+    printf("First IOCACHE offset: %08lx\n", IOCACHE_ENABLED(0));
+    printf("Last IOCACHE offset:  %08lx\n", IOCACHE_FLAGS_RO(7));
 
-	// Test Normal Operation
-	for (i = 0; i < NTRIALS; i++) {
-		printf("Trial %d (Normal Op)\n", i);
-		// init_rx();
-		// run_test();
-	}
+    // Test Normal Operation
+    for (i = 0; i < NTRIALS; i++) {
+        printf("Trial %d (Normal Op)\n", i);
+        // init_rx();
+        // run_test();
+    }
 
-	// Test UDP Offload
-	for (i = 0; i < NTRIALS; i++) {
-		printf("Trial %d (UDP)\n", i);
-		init_udp();
-		run_udp_test();
-	}
-	
+    // Test UDP Offload
+    for (i = 0; i < NTRIALS; i++) {
+        printf("Trial %d (UDP)\n", i);
+    	
+		int ring = 3*i + 1;
+		int port = 1200+10*i;
 
-	printf("All correct\n");
+        init_udp(ring, port);
+		
+        run_udp_test(ring);
 
-	return 0;
+		// clean_ring(ring);
+    }
+
+    printf("All correct\n");
+    return 0;
 }
