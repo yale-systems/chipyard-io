@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 /* ---- Device base ---- */
-#define IOCACHE_BASE         0x10018000UL
+#define IOCACHE_BASE         0x10030000UL
 
 /* ---- Sub-block bases (must match Scala) ----
  * Scala:

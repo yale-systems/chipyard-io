@@ -16,10 +16,10 @@
 #define TEST_OFFSET 0
 #define TEST_LEN 90
 #define ARRAY_LEN DMA_ALIGN(TEST_LEN + NPACKETS + TEST_OFFSET)
-#define NTRIALS 3
+#define NTRIALS 5
 
 #define UDP_TEST_LEN 64
-#define UDP_RING_SIZE (8*1024)
+#define UDP_RING_SIZE (1*1024)
 #define UDP_ARRAY_LEN DMA_ALIGN(UDP_RING_SIZE)
 
 uint8_t src[NPACKETS][ARRAY_LEN] __attribute__((aligned(64)));
@@ -321,7 +321,7 @@ int main(void)
     for (i = 0; i < NTRIALS; i++) {
         printf("Trial %d (UDP)\n", i);
     	
-		int ring = 3*i + 1;
+		int ring = 13*i + 3;
 		int port = 1200+10*i;
 
         init_udp(ring, port);

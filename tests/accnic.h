@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 /* ---- Top-level bases (unchanged) ---- */
-#define ACCNIC_BASE     0x1000A000UL
+#define ACCNIC_BASE     0x10040000UL
 #define CTRL_OFFSET     0x00
 #define RX_OFFSET       0x1000
 #define TX_OFFSET       0x2000
