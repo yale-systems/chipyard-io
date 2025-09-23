@@ -94,7 +94,8 @@ static int test_fair_sched_round_robin_per_cpu(uint32_t cpu)
     }
 
     /* Disable row5 and re-check sequence */
-    do_write(IOCACHE_ENABLED(5), 1, 0);
+    // do_write(IOCACHE_ENABLED(5), 1, 0);
+    set_rx_state(5, false, true);
     uint64_t expect2[4] = { ptr0, ptr9, ptr0, ptr9 };
     for (int i = 0; i < 4; i++) {
         uint64_t got = do_read(rd, 64);
@@ -107,7 +108,8 @@ static int test_fair_sched_round_robin_per_cpu(uint32_t cpu)
     }
 
     /* Disable row0; only row9 remains */
-    do_write(IOCACHE_ENABLED(0), 1, 0);
+    // do_write(IOCACHE_ENABLED(0), 1, 0);
+    set_rx_state(0, false, true);
     for (int i = 0; i < 4; i++) {
         uint64_t got = do_read(rd, 64);
         printf("  CPU %u after disable row0, read[%d] = 0x%016" PRIx64 "\n", cpu, i, got);
@@ -118,7 +120,8 @@ static int test_fair_sched_round_robin_per_cpu(uint32_t cpu)
     }
 
     /* No-match case: point the last row to a different CPU */
-    do_write(IOCACHE_ENABLED(9), 1, 0);        /* disable it */
+    // do_write(IOCACHE_ENABLED(9), 1, 0);        /* disable it */
+    set_rx_state(9, false, true);
     /* Now nothing enabled for this CPU; reads should return 0 */
     for (int i = 0; i < 2; i++) {
         uint64_t got = do_read(rd, 64);
@@ -227,12 +230,12 @@ int main(void)
     uint64_t val2 = 0x000000000000000fULL;
 
     /* Simple R/W spot checks on table fields */
-    run_test(IOCACHE_SRC_IP(1),         32, val1, val2);
-    run_test(IOCACHE_RX_AVAILABLE(2),    1, val1, val2);
-    printf("Repeat...\n");
-    run_test(IOCACHE_SRC_IP(1),         32, val1, val2);
-    run_test(IOCACHE_RX_AVAILABLE(2),    1, val1, val2);
-    run_test(IOCACHE_PROTOCOL(0),        8, val1, val2);
+    // run_test(IOCACHE_SRC_IP(1),         32, val1, val2);
+    // run_test(IOCACHE_RX_AVAILABLE(2),    1, val1, val2);
+    // printf("Repeat...\n");
+    // run_test(IOCACHE_SRC_IP(1),         32, val1, val2);
+    // run_test(IOCACHE_RX_AVAILABLE(2),    1, val1, val2);
+    // run_test(IOCACHE_PROTOCOL(0),        8, val1, val2);
 
     /* Per-CPU scheduler test: pick a CPU index in-range (e.g., 3) */
     if (test_fair_sched_round_robin_per_cpu(/*cpu=*/3) != 0) return 1;

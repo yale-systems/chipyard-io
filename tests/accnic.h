@@ -17,7 +17,7 @@
 #define UDP_TX_BASE (ACCNIC_BASE + UDP_TX_OFFSET)
 #define CTRL_BASE   (ACCNIC_BASE + CTRL_OFFSET)
 
-/* ---- Control (unchanged) ---- */
+/* ---- Control ---- */
 #define CTRL_INTR_MASK   (CTRL_BASE + 0x00)
 
 /* ===================================================================== */
