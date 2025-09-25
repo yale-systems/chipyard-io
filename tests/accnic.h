@@ -19,41 +19,46 @@
 
 /* ---- Control ---- */
 #define CTRL_INTR_MASK   (CTRL_BASE + 0x00)
+#define CTRL_TIMESTAMP   (CTRL_BASE + 0x10)
 
 /* ===================================================================== */
 /* =========================  UDP RX ENGINE  =========================== */
 /* ===================================================================== */
-#define UDP_RX_RING_STRIDE          0x10UL
+#define UDP_RX_RING_STRIDE          0x20UL
 
-#define UDP_RX_RING_HEAD_OFF        0x00UL
-#define UDP_RX_RING_TAIL_OFF        0x04UL
-#define UDP_RX_RING_DROP_OFF        0x08UL
+#define UDP_RX_RING_HEAD_OFF            0x00UL
+#define UDP_RX_RING_TAIL_OFF            0x04UL
+#define UDP_RX_RING_DROP_OFF            0x08UL
+#define UDP_RX_RING_LAST_TIMESTAMP_OFF  0x10UL
 
 #define UDP_RX_RING_REG(r, off)    (UDP_RX_BASE + (uint64_t)(r) * UDP_RX_RING_STRIDE + (off))
 
 /* Per-ring convenience */
-#define UDP_RX_RING_HEAD(r)        UDP_RX_RING_REG((r), UDP_RX_RING_HEAD_OFF)   /* 32-bit */
-#define UDP_RX_RING_TAIL(r)        UDP_RX_RING_REG((r), UDP_RX_RING_TAIL_OFF)   /* 32-bit */
-#define UDP_RX_RING_DROP(r)        UDP_RX_RING_REG((r), UDP_RX_RING_DROP_OFF)   /* 32-bit, RO */
+#define UDP_RX_RING_HEAD(r)                 UDP_RX_RING_REG((r), UDP_RX_RING_HEAD_OFF)   /* 32-bit */
+#define UDP_RX_RING_TAIL(r)                 UDP_RX_RING_REG((r), UDP_RX_RING_TAIL_OFF)   /* 32-bit */
+#define UDP_RX_RING_DROP(r)                 UDP_RX_RING_REG((r), UDP_RX_RING_DROP_OFF)   /* 32-bit, RO */
+#define UDP_RX_RING_LAST_TIMESTAMP(r)       UDP_RX_RING_REG((r), UDP_RX_RING_LAST_TIMESTAMP_OFF)   /* 64-bit, RO */
 
 /* Engine-level IRQ */
 #define UDP_RX_IRQ_PENDING         (UDP_RX_BASE + 0x400UL)
 #define UDP_RX_IRQ_CLEAR           (UDP_RX_BASE + 0x404UL)
-#define UDP_RX_LAST_TIMESTAMP      (UDP_RX_BASE + 0x408UL)
+// #define UDP_RX_LAST_TIMESTAMP      (UDP_RX_BASE + 0x408UL)
 
 /* ===================================================================== */
 /* =========================  UDP TX ENGINE  =========================== */
 /* ===================================================================== */
 #define UDP_TX_RING_STRIDE          0x10UL
 
-#define UDP_TX_RING_HEAD_OFF        0x00UL
-#define UDP_TX_RING_TAIL_OFF        0x04UL
+#define UDP_TX_RING_HEAD_OFF                0x00UL
+#define UDP_TX_RING_TAIL_OFF                0x04UL
+#define UDP_TX_RING_LAST_TIMESTAMP_OFF      0x08UL
 
 #define UDP_TX_RING_REG(r, off)    (UDP_TX_BASE + (uint64_t)(r) * UDP_TX_RING_STRIDE + (off))
 
 /* Per-ring convenience */
-#define UDP_TX_RING_HEAD(r)        UDP_TX_RING_REG((r), UDP_TX_RING_HEAD_OFF)   /* 32-bit */
-#define UDP_TX_RING_TAIL(r)        UDP_TX_RING_REG((r), UDP_TX_RING_TAIL_OFF)   /* 32-bit */
+#define UDP_TX_RING_HEAD(r)                 UDP_TX_RING_REG((r), UDP_TX_RING_HEAD_OFF)   /* 32-bit */
+#define UDP_TX_RING_TAIL(r)                 UDP_TX_RING_REG((r), UDP_TX_RING_TAIL_OFF)   /* 32-bit */
+#define UDP_TX_RING_LAST_TIMESTAMP(r)       UDP_TX_RING_REG((r), UDP_TX_RING_LAST_TIMESTAMP_OFF)   /* 64-bit, RO */
 
 /* Global/header regs */
 #define UDP_TX_MTU                 (UDP_TX_BASE + 0x400UL)  /* 16-bit */
@@ -67,7 +72,7 @@
 /* TX IRQ */
 #define UDP_TX_IRQ_PENDING         (UDP_TX_BASE + 0x430UL)
 #define UDP_TX_IRQ_CLEAR           (UDP_TX_BASE + 0x434UL)
-#define UDP_TX_LAST_TIMESTAMP      (UDP_TX_BASE + 0x438UL)
+// #define UDP_TX_LAST_TIMESTAMP      (UDP_TX_BASE + 0x438UL)
 
 /* ======================================== */
 /* ======== Legacy non-UDP RX/TX  ========= */

@@ -171,10 +171,13 @@ static inline void udp_send_recv(int ring) {
     val = reg_read32(IOCACHE_RX_AVAILABLE(ring));
     printf("Check IOCache RX_AVAIL After: 0x%08x\n", val);
 
-	tx_time = reg_read64(UDP_TX_LAST_TIMESTAMP);
-	rx_time = reg_read64(UDP_RX_LAST_TIMESTAMP);
+	tx_time = reg_read64(UDP_TX_RING_LAST_TIMESTAMP(ring));
+	rx_time = reg_read64(UDP_RX_RING_LAST_TIMESTAMP(ring));
+	
+	uint64_t now = reg_read64(CTRL_TIMESTAMP);
 
 	printf("time_diff=%ld,		rx_time=%ld, tx_time=%ld\n", rx_time - tx_time, rx_time, tx_time);
+	printf("now=%lu\n", now);
 
     // printf("Source=\n");
     // for (uint32_t j = 0; j < UDP_TEST_LEN; j++) {
